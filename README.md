@@ -48,4 +48,4 @@ end)
 
 ## Документация
 
-[Все руководства](MANUALS/) · [Текущий выпуск](CHANGELOG.md) · [Лицензия MIT](LICENSE)
+[Все руководства (MANUALS)](MANUALS/) · [GitHub Wiki](https://github.com/AdrescorGiti/NSH/wiki) · [Текущий выпуск](CHANGELOG.md) · [Лицензия MIT](LICENSE)
