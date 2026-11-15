@@ -1,0 +1,10 @@
+name = "syntax-colors"
+version = "1.0.0"
+api_version = 1
+entry = "init.lua"
+description = "Classifies the typed buffer and colors commands, strings, options and operators."
+author = "NSH contributors"
+dependencies = []
+capabilities = []
+priority = 0
+nsh_version = ">=0.2.1, <0.3.0"

@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.."
+
+for command in git autoconf automake autoreconf make cc strip; do
+    if ! command -v "$command" >/dev/null; then
+        printf 'Required tool: %s\n' "$command" >&2
+        exit 1
+    fi
+done
+
+root="$PWD/.build/current-shells"
+source="$root/dash"
+binary="$root/bin/dash"
+version=0.5.13.6
+commit=0a896bfccbefdd5e79ae8ef6061f7e17e20c03f4
+mkdir -p -- "$root/bin"
+
+if [[ ! -e "$source" ]]; then
+    git -c advice.detachedHead=false clone --depth 1 --branch "v$version" \
+        https://git.kernel.org/pub/scm/utils/dash/dash.git "$source"
+fi
+if [[ "$(git -C "$source" rev-parse --verify HEAD)" != "$commit" ]]; then
+    printf 'Unexpected Git revision in %s. Expected %s.\n' "$source" "$commit" >&2
+    exit 1
+fi
+if ! git -C "$source" diff --quiet HEAD --; then
+    printf 'Tracked files in %s have local changes.\n' "$source" >&2
+    exit 1
+fi
+
+(
+    cd -- "$source" &&
+        autoreconf -fi &&
+        ./configure &&
+        make -j4
+) > "$root/dash-build.log" 2>&1 || {
+    printf 'Dash build failed. See %s/dash-build.log.\n' "$root" >&2
+    exit 1
+}
+
+temporary=$(mktemp "$root/bin/.dash.XXXXXXXX")
+trap 'rm -f -- "$temporary"' EXIT
+strip --strip-unneeded -o "$temporary" "$source/src/dash"
+chmod 755 "$temporary"
+[[ "$("$temporary" -c 'printf %s dash')" == dash ]]
+mv -f -- "$temporary" "$binary"
+printf 'Dash %s (%s) built at %s\n' "$version" "$commit" "$binary"

@@ -1,0 +1,13 @@
+/target/
+/.pkgbuild/
+/build/
+/srcdir/
+/pkg/
+/.build/
+/.syntax-test/
+/logs/
+/packages/
+/nsh-*.tar.zst
+/benchmarks/.run-*/
+__pycache__/
+*.pyc

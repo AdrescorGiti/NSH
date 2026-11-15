@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.."
+umask 077
+reference="$PWD/.build/references"
+mkdir -p "$reference"/{dash,yash}
+archive="$reference/dash.pkg.tar.zst"
+dash_hash=13ec6ccf4c03d3ce9e2c2e5b01018e25cb2c636d421048473573bfea1c9d7ec4
+if [[ ! -e "$archive" ]]; then
+    incoming=$(mktemp "$reference/.dash.XXXXXXXX")
+    trap 'rm -f -- "$incoming"' EXIT
+    curl -fSL --max-time 120 -o "$incoming" \
+        https://archive.archlinux.org/packages/d/dash/dash-0.5.13.5-1-x86_64.pkg.tar.zst
+    printf '%s  %s\n' "$dash_hash" "$incoming" | sha256sum -c -
+    mv -- "$incoming" "$archive"
+    trap - EXIT
+fi
+printf '%s  %s\n' "$dash_hash" "$archive" | sha256sum -c -
+bsdtar -xf "$archive" -C "$reference/dash"
+printf 'Dash package %s\n' "$(pacman -Qp "$archive")"
+
+yash_src="$reference/yash/source"
+if [[ ! -d "$yash_src/.git" ]]; then
+    git clone --depth 1 --branch 2.61 https://github.com/magicant/yash.git "$yash_src"
+fi
+yash_commit=519475a68692ba3c375e40a62a39b2b48d4a431f
+[[ "$(git -C "$yash_src" rev-parse HEAD)" == "$yash_commit" ]]
+(
+    cd "$yash_src"
+    ./configure > ../configure.log
+    make -j4 yash > ../make.log
+    printf 'Yash commit %s\n' "$yash_commit"
+    ./yash --version
+)

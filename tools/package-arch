@@ -1,0 +1,106 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.."
+
+if (( $# > 1 )); then
+    printf 'Usage: %s [previous.pkg.tar.zst]\n' "$0" >&2
+    exit 2
+fi
+previous=
+if (( $# == 1 )); then
+    previous=$(realpath -- "$1")
+    [[ -f "$previous" ]] || { printf 'Missing previous package %s\n' "$previous" >&2; exit 2; }
+fi
+
+if [[ "$(uname -m)" != x86_64 ]]; then
+    printf '%s\n' 'The Arch recipe targets x86_64.' >&2
+    exit 1
+fi
+
+version=$(sed -nE 's/^version = "([0-9]+\.[0-9]+\.[0-9]+)"$/\1/p' Cargo.toml)
+[[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+name="nsh-$version"
+pkgrel=$(sed -nE 's/^pkgrel=([0-9]+)$/\1/p' packaging/PKGBUILD.in)
+[[ "$pkgrel" =~ ^[0-9]+$ ]]
+package="$name-$pkgrel-x86_64.pkg.tar.zst"
+files=(Cargo.toml Cargo.lock LICENSE README.md CHANGELOG.md src tests docs/licenses MANUALS
+       examples tools packaging benchmarks/*.py benchmarks/fixtures benchmarks/shells.svg)
+for required in Cargo.lock LICENSE README.md CHANGELOG.md MANUALS/README.md MANUALS/POSIX.md MANUALS/CONFIG.md MANUALS/LOGIN.md \
+    MANUALS/ARCHITECTURE.md MANUALS/PLUGINS.md MANUALS/PLUGIN_API.md MANUALS/BENCHMARKS.md MANUALS/nsh.1 \
+    examples/conf.sh benchmarks/profile_allocations.py benchmarks/shells.svg MANUALS/benchmarks/current.md \
+    MANUALS/benchmarks/current.json; do
+    if [[ ! -f "$required" ]]; then
+        printf 'Missing release source %s\n' "$required" >&2
+        exit 1
+    fi
+done
+
+mkdir -p -- .build packages logs
+stage=$(mktemp -d "$PWD/.build/arch.XXXXXXXX")
+container=
+cleanup() {
+    if [[ -n "$container" ]]; then
+        docker rm -f "$container" >/dev/null
+    fi
+    rm -rf -- "$stage"
+}
+trap cleanup EXIT
+epoch=1794700800
+archive="$name.tar.zst"
+tar --exclude='*/__pycache__' --exclude='*.pyc' --sort=name --mtime="@$epoch" --format=gnu --numeric-owner --owner=0 --group=0 \
+    --transform "s|^|$name/|" -cf - "${files[@]}" | zstd -q -19 -o "$stage/$archive"
+hash=$(sha256sum "$stage/$archive")
+hash=${hash%% *}
+sed -e "s/@VERSION@/$version/g" -e "s/@SHA256@/$hash/g" packaging/PKGBUILD.in > "$stage/PKGBUILD"
+install -m644 "$stage/$archive" "$archive"
+install -m644 "$stage/PKGBUILD" PKGBUILD
+
+docker build --target builder --iidfile "$stage/builder" -f packaging/Dockerfile packaging \
+    |& tee logs/arch-image-build.log
+image=$(cat "$stage/builder")
+container=$(docker create --workdir /work --cap-drop ALL --cap-add CHOWN --cap-add SETGID \
+    --cap-add SETUID --cap-add DAC_OVERRIDE --cap-add FOWNER --cap-add SYS_CHROOT --security-opt no-new-privileges "$image" /usr/bin/bash -euc '
+        pacman -Q glibc rust python pacman fish git
+        chown nshbuild:nshbuild PKGBUILD "$1"
+        export NSH_EPOCH="$2"
+        as_builder() {
+            chroot --userspec=nshbuild:nshbuild --skip-chdir / /usr/bin/env \
+                HOME=/home/nshbuild USER=nshbuild LOGNAME=nshbuild \
+                PKGDEST=/out SOURCE_DATE_EPOCH="$NSH_EPOCH" "$@"
+        }
+        as_builder makepkg --verifysource
+        as_builder makepkg --cleanbuild --noconfirm --log
+    ' nsh-builder "$archive" "$epoch")
+docker cp "$stage/PKGBUILD" "$container:/work/PKGBUILD"
+docker cp "$stage/$archive" "$container:/work/$archive"
+docker start -a "$container" |& tee logs/arch-package-build.log
+[[ "$(docker inspect -f '{{.State.ExitCode}}' "$container")" == 0 ]]
+docker cp "$container:/out/$package" "$stage/"
+docker rm "$container" >/dev/null
+container=
+
+printf '%s\n' "Name and ownership checks for $(uname -m)"
+{
+    uname -m
+    cat /etc/os-release
+    type -a nsh || true
+    pacman -Qs '^nsh$|^neo-sh$' || true
+    pacman -Ss '^nsh$|^neo-sh$' || true
+    if [[ -e /usr/bin/nsh || -L /usr/bin/nsh ]]; then
+        pacman -Qo -- /usr/bin/nsh || true
+        printf '%s\n' '/usr/bin/nsh already exists. Resolve ownership before any host installation.'
+    else
+        printf '%s\n' '/usr/bin/nsh is absent.'
+    fi
+    pacman -Qip -- "$stage/$package"
+    pacman -Qlp -- "$stage/$package"
+    (cd "$stage"; sha256sum "$archive" "$package")
+} |& tee logs/arch-package-inspect.log
+
+candidate="packages/$package"
+install -m644 "$stage/$package" "$candidate"
+if [[ -n "$previous" ]]; then
+    tools/test-arch-package "$previous" "$candidate"
+else
+    tools/test-arch-package "$candidate"
+fi

@@ -1,0 +1,10 @@
+name = "file-suggestions"
+version = "1.0.0"
+api_version = 1
+entry = "init.lua"
+description = "Offers one inline path suggestion and accepts it with Right Arrow."
+author = "NSH contributors"
+dependencies = []
+capabilities = ["fs"]
+priority = 0
+nsh_version = ">=0.2.1, <0.3.0"

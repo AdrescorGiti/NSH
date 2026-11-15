@@ -1,0 +1,18 @@
+name = "aurora-theme"
+version = "1.0.0"
+api_version = 1
+entry = "init.lua"
+description = "Two-line prompt and keyboard-driven shortcuts with a customizable color palette."
+author = "NSH contributors"
+dependencies = []
+capabilities = []
+priority = 0
+nsh_version = ">=0.2.1, <0.3.0"
+
+[options]
+path = "#83BBF3"
+success = "#7BDED9"
+failure = "#FF879A"
+menu_text = "#A3B8D1"
+menu_selected_text = "#162F37"
+menu_selected_background = "#7BDED9"

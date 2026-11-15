@@ -1,0 +1,8 @@
+name = "custom-commands"
+version = "1.0.0"
+api_version = 1
+entry = "init.lua"
+description = "Register hello and change the current shell directory"
+author = "NSH"
+capabilities = ["shell-state"]
+nsh_version = ">=0.2.1, <0.3.0"

@@ -1,0 +1,69 @@
+# Maintainer: NSH contributors
+pkgname=nsh
+pkgver=@VERSION@
+pkgrel=2
+pkgdesc='NSH — Neo SH. Just Vanilla SH.'
+url='https://github.com/AdrescorGiti/NSH'
+arch=('x86_64')
+license=('MIT')
+depends=('glibc' 'libgcc' 'pacman' 'util-linux')
+optdepends=('ed: default editor for fc' 'git: repository branch in the prompt')
+makedepends=('rust' 'gcc')
+checkdepends=('python' 'fish' 'git')
+options=('!debug' '!lto')
+source=("$url/releases/download/v$pkgver/$pkgname-$pkgver.tar.zst")
+sha256sums=('@SHA256@')
+
+prepare() {
+    cd "$srcdir/$pkgname-$pkgver"
+    cargo fetch --locked --target x86_64-unknown-linux-gnu
+}
+
+build() {
+    cd "$srcdir/$pkgname-$pkgver"
+    cargo build --frozen --release --target x86_64-unknown-linux-gnu
+}
+
+check() {
+    cd "$srcdir/$pkgname-$pkgver"
+    cargo test --frozen --target x86_64-unknown-linux-gnu
+    local binary=target/x86_64-unknown-linux-gnu/release/nsh
+    python tests/core.py "$binary"
+    python tests/session_pty.py "$binary"
+    python tests/jobs_pty.py "$binary"
+    python tests/fc_pty.py "$binary"
+    python tests/hash.py "$binary"
+    python tests/printf.py "$binary"
+    python tests/performance_contracts.py "$binary"
+    python tests/startup_pty.py "$binary"
+    python tests/prompt_pty.py "$binary"
+    python tests/plugins.py "$binary"
+    python tests/lua_plugins.py "$binary"
+    python tests/plugin_pty.py "$binary"
+}
+
+package() {
+    cd "$srcdir/$pkgname-$pkgver"
+    install -Dm755 target/x86_64-unknown-linux-gnu/release/nsh "$pkgdir/usr/bin/nsh"
+    install -Dm644 MANUALS/nsh.1 "$pkgdir/usr/share/man/man1/nsh.1"
+    install -Dm644 LICENSE "$pkgdir/usr/share/licenses/nsh/LICENSE"
+    local document
+    for document in README.md CHANGELOG.md LICENSE; do
+        install -Dm644 "$document" "$pkgdir/usr/share/doc/nsh/${document##*/}"
+    done
+    for document in MANUALS/*.md MANUALS/nsh.1 MANUALS/benchmarks/*; do
+        install -Dm644 "$document" "$pkgdir/usr/share/doc/nsh/$document"
+    done
+    install -Dm644 benchmarks/shells.svg "$pkgdir/usr/share/doc/nsh/benchmarks/shells.svg"
+    for document in docs/licenses/*; do
+        if [[ -f "$document" ]]; then
+            install -Dm644 "$document" "$pkgdir/usr/share/licenses/nsh/${document##*/}"
+        fi
+    done
+    (
+        cd examples
+        find . -type f -print0 | while IFS= read -r -d '' example; do
+            install -Dm644 "$example" "$pkgdir/usr/share/doc/nsh/examples/${example#./}"
+        done
+    )
+}

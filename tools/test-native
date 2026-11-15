@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.."
+nsh=$(realpath "${1:?usage: tools/test-native path/to/nsh [path/to/strace]}")
+tracer=${2:-strace}
+if [[ "$tracer" == */* ]]; then
+    tracer=$(realpath "$tracer")
+fi
+mkdir -p .build logs
+work=$(mktemp -d "$PWD/.build/native.XXXXXXXX")
+trap 'rm -rf -- "$work"' EXIT
+printf '%s\n' 'printf_test() { echo "enoexec:$1"; }; printf_test "$1"' > "$work/exec-text"
+chmod 700 "$work/exec-text"
+
+# Direct execution and ENOEXEC fallback under an execve-only trace.
+(
+    cd "$work"
+    env -i PATH=/usr/bin:/bin LC_ALL=C "$tracer" -f -qq -s 512 -e trace=execve \
+        -o "$OLDPWD/logs/native-execve.log" -- "$nsh" --vanilla -c \
+        'echo "$(echo native)" | /usr/bin/cat; ./exec-text argument'
+) > logs/native-stdout.log
+diff -u <(printf '%s\n' native enoexec:argument) logs/native-stdout.log
+rg -q 'execve\("/usr/bin/cat"' logs/native-execve.log
+rg -q 'execve\("\./exec-text".*ENOEXEC' logs/native-execve.log
+if rg -q 'execve\("([^"]*/)?(bash|dash|sh|yash)"' logs/native-execve.log; then
+    printf '%s\n' 'An unexpected external shell was executed.' >&2
+    exit 1
+fi
+
+# A separate mount namespace has a fresh root with only NSH, its runtime
+# libraries, and the ENOEXEC fixture. No shell or other utility is mounted.
+result=$(bwrap --unshare-user --unshare-pid --unshare-net \
+    --clearenv --setenv PATH /empty --setenv LC_ALL C \
+    --ro-bind "$nsh" /nsh --ro-bind "$work/exec-text" /exec-text \
+    --ro-bind /usr/lib/libc.so.6 /usr/lib/libc.so.6 \
+    --ro-bind /usr/lib/libm.so.6 /usr/lib/libm.so.6 \
+    --ro-bind /usr/lib/libgcc_s.so.1 /usr/lib/libgcc_s.so.1 \
+    --ro-bind /usr/lib/ld-linux-x86-64.so.2 /lib64/ld-linux-x86-64.so.2 \
+    --symlink usr/lib /lib \
+    /nsh --vanilla -c 'set -e; echo "$(echo native)" | read value; /exec-text argument; echo isolated')
+[[ "$result" == $'enoexec:argument\nisolated' ]]
+printf '%s\n' 'Native execve trace and shell-free mount namespace passed.'

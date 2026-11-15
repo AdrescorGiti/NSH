@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="952" height="533" viewBox="0 0 952 533" xml:lang="en" role="img" aria-labelledby="title description">
+<title id="title">Shell benchmarks</title>
+<desc id="description">Median wall-clock time per workload (ms). Lower is faster. CachyOS · x86_64 · 2026-11-15 UTC. NSH 0.2.1, Dash 0.5.13.6, Zsh 5.9.2, Fish 4.9.3, Bash 5.3.20. Warm startup — NSH 1.733 ms, Dash 1.536 ms, Zsh 1.911 ms, Fish 2.338 ms, Bash 1.882 ms. Cold executable pages — NSH 3.811 ms, Dash 2.026 ms, Zsh 3.192 ms, Fish 9.279 ms, Bash 3.145 ms. 2,000 true builtins — NSH 2.361 ms, Dash 1.904 ms, Zsh 3.802 ms, Fish 4.879 ms, Bash 2.737 ms. 800 printf calls — NSH 3.494 ms, Dash 2.725 ms, Zsh 5.195 ms, Fish 5.811 ms, Bash 4.234 ms. 1,600 function calls — NSH 4.107 ms, Dash 3.762 ms, Zsh 12.102 ms, Fish 13.872 ms, Bash 9.368 ms. Multiline block · 1,200 true calls — NSH 2.563 ms, Dash 1.818 ms, Zsh 2.988 ms, Fish 3.985 ms, Bash 2.934 ms. 16 MiB pipeline — NSH 5.718 ms, Dash 5.554 ms, Zsh 5.935 ms, Fish 6.224 ms, Bash 5.915 ms. 100 /usr/bin/true processes — NSH 27.350 ms, Dash 19.106 ms, Zsh 32.368 ms, Fish 21.767 ms, Bash 28.763 ms. 100 cat processes via PATH — NSH 39.492 ms, Dash 29.756 ms, Zsh 44.202 ms, Fish 33.231 ms, Bash 39.674 ms.</desc>
+<g aria-hidden="true">
+<rect width="952" height="533" rx="15" fill="#0c111a"/>
+<g font-family="DejaVu Sans, sans-serif">
+<text x="24" y="49" fill="#f5f8ff" font-size="31" text-anchor="start" font-weight="700">Shell benchmarks</text>
+<text x="24" y="75" fill="#acbed4" font-size="14" text-anchor="start">Median wall-clock time per workload (ms)</text>
+<rect x="24" y="100" width="904" height="55" rx="7" fill="#1d2a3b"/>
+<text x="40" y="133" fill="#e1e9f4" font-size="13" text-anchor="start" font-weight="700">Workload</text>
+<text x="388" y="124" fill="#e1e9f4" font-size="15" text-anchor="middle" font-weight="700">NSH</text>
+<text x="388" y="142" fill="#acbed4" font-size="11" text-anchor="middle" font-family="DejaVu Sans Mono, monospace">0.2.1</text>
+<text x="508" y="124" fill="#e1e9f4" font-size="15" text-anchor="middle" font-weight="700">Dash</text>
+<text x="508" y="142" fill="#acbed4" font-size="11" text-anchor="middle" font-family="DejaVu Sans Mono, monospace">0.5.13.6</text>
+<text x="628" y="124" fill="#e1e9f4" font-size="15" text-anchor="middle" font-weight="700">Zsh</text>
+<text x="628" y="142" fill="#acbed4" font-size="11" text-anchor="middle" font-family="DejaVu Sans Mono, monospace">5.9.2</text>
+<text x="748" y="124" fill="#e1e9f4" font-size="15" text-anchor="middle" font-weight="700">Fish</text>
+<text x="748" y="142" fill="#acbed4" font-size="11" text-anchor="middle" font-family="DejaVu Sans Mono, monospace">4.9.3</text>
+<text x="868" y="124" fill="#e1e9f4" font-size="15" text-anchor="middle" font-weight="700">Bash</text>
+<text x="868" y="142" fill="#acbed4" font-size="11" text-anchor="middle" font-family="DejaVu Sans Mono, monospace">5.3.20</text>
+<rect x="24" y="155" width="904" height="36" fill="#141e2c"/>
+<text x="40" y="178" fill="#e1e9f4" font-size="14" text-anchor="start">Warm startup</text>
+<text x="388" y="178" fill="#e1e9f4" font-size="14" text-anchor="middle" font-family="DejaVu Sans Mono, monospace">1.733</text>
+<rect x="460" y="160" width="96" height="26" rx="5" fill="#1b3b3b"/>
+<text x="508" y="178" fill="#a8f2dd" font-size="14" text-anchor="middle" font-family="DejaVu Sans Mono, monospace" font-weight="700">1.536</text>
+<text x="628" y="178" fill="#e1e9f4" font-size="14" text-anchor="middle" font-family="DejaVu Sans Mono, monospace">1.911</text>
+<text x="748" y="178" fill="#e1e9f4" font-size="14" text-anchor="middle" font-family="DejaVu Sans Mono, monospace">2.338</text>
+<text x="868" y="178" fill="#e1e9f4" font-size="14" text-anchor="middle" font-family="DejaVu Sans Mono, monospace">1.882</text>
+<rect x="24" y="191" width="904" height="36" fill="#101925"/>
+<text x="40" y="214" fill="#e1e9f4" font-size="14" text-anchor="start">Cold executable pages</text>
+<text x="388" y="214" fill="#e1e9f4" font-size="14" text-anchor="middle" font-family="DejaVu Sans Mono, monospace">3.811</text>
+<rect x="460" y="196" width="96" height="26" rx="5" fill="#1b3b3b"/>
+<text x="508" y="214" fill="#a8f2dd" font-size="14" text-anchor="middle" font-family="DejaVu Sans Mono, monospace" font-weight="700">2.026</text>
+<text x="628" y="214" fill="#e1e9f4" font-size="14" text-anchor="middle" font-family="DejaVu Sans Mono, monospace">3.192</text>
+<text x="748" y="214" fill="#e1e9f4" font-size="14" text-anchor="middle" font-family="DejaVu Sans Mono, monospace">9.279</text>
+<text x="868" y="214" fill="#e1e9f4" font-size="14" text-anchor="middle" font-family="DejaVu Sans Mono, monospace">3.145</text>
+<rect x="24" y="227" width="904" height="36" fill="#141e2c"/>
+<text x="40" y="250" fill="#e1e9f4" font-size="14" text-anchor="start">2,000 true builtins</text>
+<text x="388" y="250" fill="#e1e9f4" font-size="14" text-anchor="middle" font-family="DejaVu Sans Mono, monospace">2.361</text>
+<rect x="460" y="232" width="96" height="26" rx="5" fill="#1b3b3b"/>
+<text x="508" y="250" fill="#a8f2dd" font-size="14" text-anchor="middle" font-family="DejaVu Sans Mono, monospace" font-weight="700">1.904</text>
+<text x="628" y="250" fill="#e1e9f4" font-size="14" text-anchor="middle" font-family="DejaVu Sans Mono, monospace">3.802</text>
+<text x="748" y="250" fill="#e1e9f4" font-size="14" text-anchor="middle" font-family="DejaVu Sans Mono, monospace">4.879</text>
+<text x="868" y="250" fill="#e1e9f4" font-size="14" text-anchor="middle" font-family="DejaVu Sans Mono, monospace">2.737</text>
+<rect x="24" y="263" width="904" height="36" fill="#101925"/>
+<text x="40" y="286" fill="#e1e9f4" font-size="14" text-anchor="start">800 printf calls</text>
+<text x="388" y="286" fill="#e1e9f4" font-size="14" text-anchor="middle" font-family="DejaVu Sans Mono, monospace">3.494</text>
+<rect x="460" y="268" width="96" height="26" rx="5" fill="#1b3b3b"/>
+<text x="508" y="286" fill="#a8f2dd" font-size="14" text-anchor="middle" font-family="DejaVu Sans Mono, monospace" font-weight="700">2.725</text>
+<text x="628" y="286" fill="#e1e9f4" font-size="14" text-anchor="middle" font-family="DejaVu Sans Mono, monospace">5.195</text>
+<text x="748" y="286" fill="#e1e9f4" font-size="14" text-anchor="middle" font-family="DejaVu Sans Mono, monospace">5.811</text>
+<text x="868" y="286" fill="#e1e9f4" font-size="14" text-anchor="middle" font-family="DejaVu Sans Mono, monospace">4.234</text>
+<rect x="24" y="299" width="904" height="36" fill="#141e2c"/>
+<text x="40" y="322" fill="#e1e9f4" font-size="14" text-anchor="start">1,600 function calls</text>
+<text x="388" y="322" fill="#e1e9f4" font-size="14" text-anchor="middle" font-family="DejaVu Sans Mono, monospace">4.107</text>
+<rect x="460" y="304" width="96" height="26" rx="5" fill="#1b3b3b"/>
+<text x="508" y="322" fill="#a8f2dd" font-size="14" text-anchor="middle" font-family="DejaVu Sans Mono, monospace" font-weight="700">3.762</text>
+<text x="628" y="322" fill="#e1e9f4" font-size="14" text-anchor="middle" font-family="DejaVu Sans Mono, monospace">12.102</text>
+<text x="748" y="322" fill="#e1e9f4" font-size="14" text-anchor="middle" font-family="DejaVu Sans Mono, monospace">13.872</text>
+<text x="868" y="322" fill="#e1e9f4" font-size="14" text-anchor="middle" font-family="DejaVu Sans Mono, monospace">9.368</text>
+<rect x="24" y="335" width="904" height="36" fill="#101925"/>
+<text x="40" y="358" fill="#e1e9f4" font-size="14" text-anchor="start">Multiline block · 1,200 true calls</text>
+<text x="388" y="358" fill="#e1e9f4" font-size="14" text-anchor="middle" font-family="DejaVu Sans Mono, monospace">2.563</text>
+<rect x="460" y="340" width="96" height="26" rx="5" fill="#1b3b3b"/>
+<text x="508" y="358" fill="#a8f2dd" font-size="14" text-anchor="middle" font-family="DejaVu Sans Mono, monospace" font-weight="700">1.818</text>
+<text x="628" y="358" fill="#e1e9f4" font-size="14" text-anchor="middle" font-family="DejaVu Sans Mono, monospace">2.988</text>
+<text x="748" y="358" fill="#e1e9f4" font-size="14" text-anchor="middle" font-family="DejaVu Sans Mono, monospace">3.985</text>
+<text x="868" y="358" fill="#e1e9f4" font-size="14" text-anchor="middle" font-family="DejaVu Sans Mono, monospace">2.934</text>
+<rect x="24" y="371" width="904" height="36" fill="#141e2c"/>
+<text x="40" y="394" fill="#e1e9f4" font-size="14" text-anchor="start">16 MiB pipeline</text>
+<text x="388" y="394" fill="#e1e9f4" font-size="14" text-anchor="middle" font-family="DejaVu Sans Mono, monospace">5.718</text>
+<rect x="460" y="376" width="96" height="26" rx="5" fill="#1b3b3b"/>
+<text x="508" y="394" fill="#a8f2dd" font-size="14" text-anchor="middle" font-family="DejaVu Sans Mono, monospace" font-weight="700">5.554</text>
+<text x="628" y="394" fill="#e1e9f4" font-size="14" text-anchor="middle" font-family="DejaVu Sans Mono, monospace">5.935</text>
+<text x="748" y="394" fill="#e1e9f4" font-size="14" text-anchor="middle" font-family="DejaVu Sans Mono, monospace">6.224</text>
+<text x="868" y="394" fill="#e1e9f4" font-size="14" text-anchor="middle" font-family="DejaVu Sans Mono, monospace">5.915</text>
+<rect x="24" y="407" width="904" height="36" fill="#101925"/>
+<text x="40" y="430" fill="#e1e9f4" font-size="14" text-anchor="start">100 /usr/bin/true processes</text>
+<text x="388" y="430" fill="#e1e9f4" font-size="14" text-anchor="middle" font-family="DejaVu Sans Mono, monospace">27.350</text>
+<rect x="460" y="412" width="96" height="26" rx="5" fill="#1b3b3b"/>
+<text x="508" y="430" fill="#a8f2dd" font-size="14" text-anchor="middle" font-family="DejaVu Sans Mono, monospace" font-weight="700">19.106</text>
+<text x="628" y="430" fill="#e1e9f4" font-size="14" text-anchor="middle" font-family="DejaVu Sans Mono, monospace">32.368</text>
+<text x="748" y="430" fill="#e1e9f4" font-size="14" text-anchor="middle" font-family="DejaVu Sans Mono, monospace">21.767</text>
+<text x="868" y="430" fill="#e1e9f4" font-size="14" text-anchor="middle" font-family="DejaVu Sans Mono, monospace">28.763</text>
+<rect x="24" y="443" width="904" height="36" fill="#141e2c"/>
+<text x="40" y="466" fill="#e1e9f4" font-size="14" text-anchor="start">100 cat processes via PATH</text>
+<text x="388" y="466" fill="#e1e9f4" font-size="14" text-anchor="middle" font-family="DejaVu Sans Mono, monospace">39.492</text>
+<rect x="460" y="448" width="96" height="26" rx="5" fill="#1b3b3b"/>
+<text x="508" y="466" fill="#a8f2dd" font-size="14" text-anchor="middle" font-family="DejaVu Sans Mono, monospace" font-weight="700">29.756</text>
+<text x="628" y="466" fill="#e1e9f4" font-size="14" text-anchor="middle" font-family="DejaVu Sans Mono, monospace">44.202</text>
+<text x="748" y="466" fill="#e1e9f4" font-size="14" text-anchor="middle" font-family="DejaVu Sans Mono, monospace">33.231</text>
+<text x="868" y="466" fill="#e1e9f4" font-size="14" text-anchor="middle" font-family="DejaVu Sans Mono, monospace">39.674</text>
+<text x="24" y="510" fill="#acbed4" font-size="12" text-anchor="start">CachyOS · x86_64 · 2026-11-15 UTC</text>
+<text x="928" y="510" fill="#acbed4" font-size="12" text-anchor="end">Bold values are fastest at the shown precision.</text>
+</g>
+</g>
+</svg>

@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+set -euo pipefail
+if (( $# < 1 || $# > 2 )); then
+    printf 'Usage: %s initial.pkg.tar.zst [update.pkg.tar.zst]\n' "$0" >&2
+    exit 2
+fi
+initial=$(realpath -- "$1")
+[[ -f "$initial" ]]
+update=
+if (( $# == 2 )); then
+    update=$(realpath -- "$2")
+    [[ -f "$update" ]]
+fi
+cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.."
+mkdir -p .build logs
+recipe_id=$(mktemp "$PWD/.build/arch-runtime.XXXXXXXX")
+container=
+cleanup() {
+    if [[ -n "$container" ]]; then
+        docker rm -f "$container" >/dev/null
+    fi
+    rm -f -- "$recipe_id"
+}
+trap cleanup EXIT
+
+docker build --target runtime-test --iidfile "$recipe_id" -f packaging/Dockerfile packaging \
+    |& tee logs/arch-runtime-image.log
+container=$(docker create --network none --cap-drop ALL \
+    --cap-add CHOWN --cap-add DAC_OVERRIDE --cap-add FOWNER --cap-add SETGID --cap-add SETUID \
+    --cap-add FSETID --cap-add AUDIT_WRITE --cap-add SYS_CHROOT --cap-add KILL \
+    "$(cat "$recipe_id")" /usr/bin/bash -euc '
+        # The base container omits documentation to save space. Exercise a
+        # complete package installation by enabling these paths in the fixture.
+        sed -i -E "/^[[:space:]]*NoExtract[[:space:]]*=/ s@ *usr/share/(doc|man)/\\*@@g" /etc/pacman.conf
+        exec /usr/bin/python /nsh-test.py
+    ')
+docker cp "$initial" "$container:/initial.pkg.tar.zst"
+if [[ -n "$update" ]]; then
+    docker cp "$update" "$container:/update.pkg.tar.zst"
+fi
+docker cp packaging/test_lifecycle.py "$container:/nsh-test.py"
+docker start -a "$container" |& tee logs/arch-package-test.log
+[[ "$(docker inspect -f '{{.State.ExitCode}}' "$container")" == 0 ]]

@@ -1,0 +1,130 @@
+.TH NSH 1 "2026-11-15" "NSH 0.2.1" "User Commands"
+.SH NAME
+nsh \- Neo SH. Just Vanilla SH.
+.SH SYNOPSIS
+.B nsh
+.RB [ \-iln ]
+.RB [ \-\-posix | \-\-vanilla ]
+.RB [ \-\-profile " name" ]
+.RB [ \-\- ]
+.RI [ file " [" arguments ...]]
+.br
+.B nsh
+.RB [ \-iln ]
+.B \-c
+.I command
+.RI [ name " [" arguments ...]]
+.br
+.B nsh
+.RB [ \-iln ]
+.B \-s
+.RI [ arguments ...]
+.br
+.B nsh
+.B \-\-set-default
+.RB [ \-\-dry-run ]
+.SH DESCRIPTION
+NSH interprets shell programs on Linux and provides an interactive terminal
+editor. The tested POSIX.1-2024 behavior and known gaps are documented in
+.I /usr/share/doc/nsh/POSIX.md .
+.PP
+An explicit
+.B nsh script.sh
+reads the file with the NSH interpreter. When directly executing a file, the
+kernel uses its interpreter line if present. A
+.B #!/bin/sh
+script uses the system shell. A
+.B #!/usr/bin/env nsh
+script uses the NSH found in PATH.
+.SH OPTIONS
+.TP
+.B \-c
+Execute the following argument as shell input. The next argument supplies
+.BR $0 ;
+subsequent arguments are positional parameters.
+.TP
+.B \-i
+Request interactive behavior.
+.TP
+.BR \-l ", " \-\-login
+Request login startup. Invocation with a leading hyphen in the program name
+also selects this mode.
+.TP
+.B \-n
+Parse commands without running them.
+.TP
+.B \-s
+Read commands from standard input.
+.TP
+.B \-\-posix
+Select the POSIX shell interface and its interactive ENV behavior. See the
+release notes for the verified scope.
+.TP
+.B \-\-vanilla
+Skip startup files and use in-memory history. This mode can start a session
+when configuration contains errors.
+.TP
+.BI \-\-profile " name"
+Select an interactive profile for this invocation.
+.TP
+.B \-\-help
+Show usage.
+.TP
+.B \-\-version
+Show the NSH version.
+.SH CONFIGURATION
+The interactive configuration source is
+.IR ${XDG_CONFIG_HOME:-$HOME/.config}/nsh/conf.sh .
+It is interpreted once at session startup. Commands entered through
+.B nsh set
+change session memory. The configurable editor, history, profiles, modules,
+hooks, settings and trust rules are described in
+.I /usr/share/doc/nsh/CONFIG.md .
+.PP
+The editor uses arrow keys for history and leaves Tab unbound by default.
+The history file is
+.IR ${XDG_STATE_HOME:-$HOME/.local/state}/nsh/history .
+.SH LOGIN SHELL
+.B nsh \-\-set-default \-\-dry-run
+displays the current and proposed shells, prerequisite checks and the
+rollback command. Run it from the installed
+.IR /usr/bin/nsh .
+.PP
+.B nsh \-\-set-default
+requires confirmation on a foreground controlling terminal before invoking
+.BR chsh (1).
+Keep the working session open, save the rollback command and test the new
+login in a separate session. See
+.I /usr/share/doc/nsh/LOGIN.md
+for registration, rollback and removal.
+.SH EXIT STATUS
+Ordinary execution returns the status of the last command, or the value
+supplied to
+.BR exit .
+A command missing from PATH returns 127. A command found but unavailable for
+execution returns 126.
+.SH SEE ALSO
+.BR sh (1),
+.BR chsh (1),
+.BR shells (5),
+.BR pacman (8)
+.SH LUA PLUGINS
+.TP
+.B \-\-plugins
+Load saved plugins for this invocation, including when running a script.
+.TP
+.B \-\-no-plugins
+Skip loading Lua plugins. This option also takes precedence over
+.BR \-\-plugins .
+.PP
+.B nsh plugin list
+lists available plugins.
+.B nsh plugin enable NAME
+changes the active set inside the session. An external invocation saves the
+choice for future sessions. Use
+.B command nsh
+or an absolute path to invoke the executable from NSH.
+See
+.I /usr/share/doc/nsh/PLUGINS.md
+and
+.I /usr/share/doc/nsh/PLUGIN_API.md .

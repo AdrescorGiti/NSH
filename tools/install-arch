@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+set -euo pipefail
+if [[ $# != 2 || "$1" != /* || ! "$2" =~ ^[a-fA-F0-9]{64}$ ]]; then
+    printf 'Usage: %s /absolute/path/to/nsh.pkg.tar.zst sha256\n' "$0" >&2
+    exit 2
+fi
+if (( EUID == 0 )); then
+    printf '%s\n' 'Run this from the intended non-root account.' >&2
+    exit 1
+fi
+package=$(realpath -- "$1")
+expected=${2,,}
+actual=$(sha256sum -- "$package")
+if [[ "${actual%% *}" != "$expected" ]]; then
+    printf '%s\n' 'The package SHA-256 differs from the expected digest.' >&2
+    exit 1
+fi
+metadata=$(LC_ALL=C pacman -Qip -- "$package")
+name=$(awk -F ' *: *' '$1 ~ /^Name *$/ {print $2; exit}' <<< "$metadata")
+arch=$(awk -F ' *: *' '$1 ~ /^Architecture *$/ {print $2; exit}' <<< "$metadata")
+if [[ "$name" != nsh || "$arch" != "$(uname -m)" ]]; then
+    printf '%s\n' 'The package name or architecture is unexpected.' >&2
+    exit 1
+fi
+if [[ -e /usr/bin/nsh || -L /usr/bin/nsh ]] || command -v nsh >/dev/null ||
+   pacman -Qs '^nsh$|^neo-sh$' >/dev/null || pacman -Ss '^nsh$|^neo-sh$' >/dev/null; then
+    printf '%s\n' 'An executable or a package with a conflicting name already exists. Resolve it before the first installation.' >&2
+    exit 1
+fi
+printf '%s\n' "$metadata" "$expected"
+pacman -Qlp -- "$package"
+printf 'Install command: sudo pacman -U %q\n' "$package"
+printf 'Type install to approve this package: ' > /dev/tty
+IFS= read -r reply < /dev/tty
+if [[ "$reply" != install ]]; then
+    exit 1
+fi
+account_shell() { getent passwd "$(id -u)" | cut -d: -f7; }
+previous=$(account_shell)
+actual=$(sha256sum -- "$package")
+[[ "${actual%% *}" == "$expected" ]]
+if sudo pacman -U -- "$package"; then
+    result=0
+else
+    result=$?
+fi
+current=$(account_shell)
+printf 'Login shell before: %s\nLogin shell after: %s\n' "$previous" "$current"
+[[ "$previous" == "$current" ]]
+exit "$result"
