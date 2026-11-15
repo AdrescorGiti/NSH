@@ -34,6 +34,9 @@ result=$(bwrap --unshare-user --unshare-pid --unshare-net \
     --ro-bind "$nsh" /nsh --ro-bind "$work/exec-text" /exec-text \
     --ro-bind /usr/lib/libc.so.6 /usr/lib/libc.so.6 \
     --ro-bind /usr/lib/libm.so.6 /usr/lib/libm.so.6 \
+    --ro-bind /usr/lib/libdl.so.2 /usr/lib/libdl.so.2 \
+    --ro-bind /usr/lib/libpthread.so.0 /usr/lib/libpthread.so.0 \
+    --ro-bind /usr/lib/librt.so.1 /usr/lib/librt.so.1 \
     --ro-bind /usr/lib/libgcc_s.so.1 /usr/lib/libgcc_s.so.1 \
     --ro-bind /usr/lib/ld-linux-x86-64.so.2 /lib64/ld-linux-x86-64.so.2 \
     --symlink usr/lib /lib \

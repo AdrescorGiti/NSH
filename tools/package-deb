@@ -1,0 +1,100 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if (( $# != 1 )); then
+    printf 'Usage: %s /path/to/portable/nsh\n' "$0" >&2
+    exit 2
+fi
+binary=$(realpath -- "$1")
+[[ -f "$binary" && -x "$binary" ]]
+cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.."
+export LC_ALL=C
+export SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH:-1794700800}
+umask 022
+
+header=$(readelf --file-header "$binary")
+if [[ $header != *ELF64* || $header != *'Advanced Micro Devices X86-64'* ]]; then
+    printf 'Expected an ELF64 x86-64 executable: %s\n' "$binary" >&2
+    exit 1
+fi
+notes=$(readelf --notes "$binary")
+if grep -qE 'ISA needed:.*x86-64-v[234]' <<< "$notes"; then
+    printf 'The executable requires a newer ISA than x86-64-v1.\n' >&2
+    exit 1
+fi
+segments=$(readelf --wide --program-headers "$binary")
+if [[ $segments != *'[Requesting program interpreter: /lib64/ld-linux-x86-64.so.2]'* ]]; then
+    printf 'Expected the GNU/Linux x86-64 dynamic loader.\n' >&2
+    exit 1
+fi
+dynamic=$(readelf --wide --dynamic "$binary")
+if [[ $dynamic == *'(RPATH)'* || $dynamic == *'(RUNPATH)'* || $dynamic == *'(RELR)'* ]]; then
+    printf 'The ELF contains custom library paths or requires a newer dynamic loader.\n' >&2
+    exit 1
+fi
+versions=$(readelf --wide --version-info "$binary")
+glibc=$(sed -nE 's/.*Name: GLIBC_([0-9]+\.[0-9.]+) +Flags: .*/\1/p' <<< "$versions" | sort -V | tail -n1)
+if [[ -z $glibc || $versions == *GLIBC_PRIVATE* ]] || ! dpkg --compare-versions "$glibc" le 2.17; then
+    printf 'Expected a portable ELF with a GLIBC symbol floor of 2.17 or earlier; got %s.\n' "${glibc:-unknown}" >&2
+    exit 1
+fi
+depends='libc6 (>= 2.17)'
+while IFS= read -r library; do
+    case "$library" in
+        libc.so.6|libm.so.6|libpthread.so.0|libdl.so.2|librt.so.1|libresolv.so.2|ld-linux-x86-64.so.2) ;;
+        libgcc_s.so.1) depends+=', libgcc-s1 | libgcc1' ;;
+        *) printf 'Unknown shared-library dependency: %s\n' "$library" >&2; exit 1 ;;
+    esac
+done < <(sed -nE 's/.*\(NEEDED\).*\[([^]]+)\].*/\1/p' <<< "$dynamic")
+
+version=$(sed -nE 's/^version = "([0-9]+\.[0-9]+\.[0-9]+)"$/\1/p' Cargo.toml)
+[[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+if [[ $("$binary" --version) != "NSH (Neo SH) $version" ]]; then
+    printf 'Expected version %s from %s.\n' "$version" "$binary" >&2
+    exit 1
+fi
+package="nsh_${version}-1_amd64.deb"
+mkdir -p .build packages
+stage=$(mktemp -d "$PWD/.build/deb.XXXXXXXX")
+trap 'rm -rf -- "$stage"' EXIT
+root="$stage/root"
+docs="$root/usr/share/doc/nsh"
+
+install -Dm755 "$binary" "$root/usr/bin/nsh"
+install -d "$root/usr/share/man/man1" "$root/DEBIAN"
+gzip -9n -c MANUALS/nsh.1 > "$root/usr/share/man/man1/nsh.1.gz"
+install -Dm644 LICENSE "$docs/copyright"
+for document in README.md CHANGELOG.md LICENSE MANUALS/*.md MANUALS/nsh.1 MANUALS/benchmarks/* benchmarks/shells.svg; do
+    install -Dm644 "$document" "$docs/$document"
+done
+for document in docs/licenses/*; do
+    install -Dm644 "$document" "$docs/${document##*/}"
+done
+while IFS= read -r -d '' example; do
+    install -Dm644 "$example" "$docs/$example"
+done < <(find examples -type f -print0)
+
+size=$(du -sk "$root/usr" | cut -f1)
+cat > "$root/DEBIAN/control" <<EOF
+Package: nsh
+Version: $version-1
+Architecture: amd64
+Maintainer: NSH contributors <211395800+AdrescorGiti@users.noreply.github.com>
+Section: shells
+Priority: optional
+Installed-Size: $size
+Depends: $depends
+Suggests: ed, git, passwd
+Homepage: https://github.com/AdrescorGiti/NSH
+Description: NSH - Neo SH
+ A POSIX-oriented shell for Linux with a Rust interpreter, job control,
+ configurable line editing, and optional Lua plugins.
+EOF
+(
+    cd "$root"
+    find usr -type f -print0 | sort -z | xargs -0 md5sum > DEBIAN/md5sums
+)
+find "$root" -exec touch -h -d "@$SOURCE_DATE_EPOCH" {} +
+dpkg-deb --root-owner-group -Zgzip -z9 --build "$root" "$stage/$package"
+mv -f -- "$stage/$package" "packages/$package"
+printf '%s\n' "packages/$package"

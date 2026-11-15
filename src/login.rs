@@ -1,4 +1,4 @@
-//! Arch/CachyOS login-shell changes. Only util-linux chsh can write the account.
+//! Checked login-shell changes. Only the system chsh writes the account.
 use std::ffi::{CStr, CString, OsString};
 use std::fs::{self, File, Metadata, OpenOptions};
 use std::io::{self, Read, Write};
@@ -11,6 +11,10 @@ use std::process::{Command, Stdio};
 const TARGET: &str = "/usr/bin/nsh";
 const CHSH: &str = "/usr/bin/chsh";
 const PACMAN: &str = "/usr/bin/pacman";
+const DPKG_QUERY: &str = "/usr/bin/dpkg-query";
+const DPKG_DB: &str = "/var/lib/dpkg";
+const RPM: &str = "/usr/bin/rpm";
+const RPM_DATABASES: [&str; 2] = ["/usr/lib/sysimage/rpm", "/var/lib/rpm"];
 const SHELLS: &str = "/etc/shells";
 const PASSWD: &str = "/etc/passwd";
 
@@ -146,7 +150,7 @@ fn metadata(path: &Path) -> Result<Metadata, String> {
 }
 
 /// Walk each component and each symlink target through root-controlled
-/// directories. This accepts Arch's /bin -> usr/bin for rollback.
+/// directories. This accepts merged /usr layouts for rollback paths.
 fn resolve_system_path(
     path: &Path,
     allow_links: bool,
@@ -207,6 +211,91 @@ fn executable(path: &Path, allow_links: bool) -> Result<Metadata, String> {
     Ok(info)
 }
 
+fn package_query(tool: &str, arguments: &[&str]) -> Option<String> {
+    let output = Command::new(tool)
+        .args(arguments)
+        .env_clear()
+        .env("HOME", "/")
+        .env("LC_ALL", "C")
+        .output()
+        .ok()?;
+    if !output.status.success() {
+        return None;
+    }
+    String::from_utf8(output.stdout).ok()
+}
+
+fn package_name(name: &str) -> bool {
+    matches!(name, "nsh" | "neo-sh")
+}
+
+fn debian_owner(output: &str) -> Option<&str> {
+    let owner = output.strip_suffix(": /usr/bin/nsh\n")?;
+    let unqualified = owner.strip_suffix(":amd64").unwrap_or(owner);
+    package_name(unqualified).then_some(owner)
+}
+
+fn system_database(path: &str) -> bool {
+    resolve_system_path(Path::new(path), true, &mut 40).is_ok_and(|(_, info)| info.is_dir())
+}
+
+fn debian_package_status() -> Option<String> {
+    let ownership = package_query(
+        DPKG_QUERY,
+        &["--admindir", DPKG_DB, "--search", "--", TARGET],
+    )?;
+    package_query(
+        DPKG_QUERY,
+        &[
+            "--admindir",
+            DPKG_DB,
+            "--show",
+            "--showformat=${Status}\n",
+            "--",
+            debian_owner(&ownership)?,
+        ],
+    )
+}
+
+fn owns_installed_package() -> bool {
+    let owner_matches = |output: String| output.strip_suffix('\n').is_some_and(package_name);
+    if executable(Path::new(PACMAN), false).is_ok()
+        && package_query(PACMAN, &["--query", "--quiet", "--owns", "--", TARGET])
+            .is_some_and(owner_matches)
+    {
+        return true;
+    }
+
+    if executable(Path::new(DPKG_QUERY), false).is_ok()
+        && system_database(DPKG_DB)
+        && matches!(
+            debian_package_status().as_deref(),
+            Some("install ok installed\n" | "hold ok installed\n")
+        )
+    {
+        return true;
+    }
+
+    executable(Path::new(RPM), false).is_ok()
+        && RPM_DATABASES.iter().any(|database| {
+            system_database(database)
+                && package_query(
+                    RPM,
+                    &[
+                        "--dbpath",
+                        database,
+                        "--noplugins",
+                        "-qf",
+                        "--queryformat",
+                        "%{NAME}\n",
+                        "--",
+                        TARGET,
+                    ],
+                )
+                .is_some_and(owner_matches)
+        })
+}
+
 fn installed_executable() -> Result<(), String> {
     let invoked = std::env::current_exe()
         .map_err(|error| format!("cannot identify the running NSH binary: {error}"))?;
@@ -223,16 +312,9 @@ fn installed_executable() -> Result<(), String> {
             "the running executable does not match the installed {TARGET}"
         ));
     }
-    executable(Path::new(PACMAN), false)?;
-    let owner = Command::new(PACMAN)
-        .args(["--query", "--quiet", "--owns", "--", TARGET])
-        .env_clear()
-        .env("LC_ALL", "C")
-        .output()
-        .map_err(|error| format!("cannot check {TARGET} ownership with pacman: {error}"))?;
-    if !owner.status.success() || !matches!(owner.stdout.as_slice(), b"nsh\n" | b"neo-sh\n") {
+    if !owns_installed_package() {
         return Err(format!(
-            "{TARGET} must be owned by the installed NSH package"
+            "{TARGET} must be owned by the installed NSH package (pacman, dpkg or rpm)"
         ));
     }
     Ok(())
@@ -430,6 +512,21 @@ pub fn run(dry_run: bool) -> i32 {
 mod tests {
     use super::*;
     use std::io::Cursor;
+
+    #[test]
+    fn debian_ownership_requires_one_nsh_package_and_the_exact_binary() {
+        assert_eq!(debian_owner("nsh: /usr/bin/nsh\n"), Some("nsh"));
+        assert_eq!(debian_owner("nsh:amd64: /usr/bin/nsh\n"), Some("nsh:amd64"));
+        for other in [
+            "not-nsh: /usr/bin/nsh\n",
+            "nsh, other: /usr/bin/nsh\n",
+            "nsh:/usr/bin/nsh\n",
+            "nsh: /usr/bin/nsh-wrapper\n",
+            "nsh: /usr/bin/nsh\nnsh: /usr/bin/nsh\n",
+        ] {
+            assert_eq!(debian_owner(other), None);
+        }
+    }
 
     #[test]
     fn passwd_requires_exactly_one_local_uid_and_name() {

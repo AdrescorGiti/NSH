@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if (( $# != 1 )); then
+    printf 'Usage: %s path/to/portable/nsh\n' "$0" >&2
+    exit 2
+fi
+
+binary=$(realpath -- "$1")
+[[ -f "$binary" && -x "$binary" ]]
+if ! LC_ALL=C readelf -hW "$binary" | grep 'Advanced Micro Devices X86-64' >/dev/null; then
+    printf '%s\n' 'Expected an x86-64 ELF executable.' >&2
+    exit 2
+fi
+if ! LC_ALL=C readelf -lW "$binary" | grep -F 'Requesting program interpreter: /lib64/ld-linux-x86-64.so.2]' >/dev/null; then
+    printf '%s\n' 'Expected the GNU x86-64 dynamic loader.' >&2
+    exit 2
+fi
+dynamic=$(LC_ALL=C readelf -dW "$binary")
+if grep -E '\((RPATH|RUNPATH|RELR|RELRSZ|RELRENT)\)' <<< "$dynamic" >/dev/null; then
+    printf '%s\n' 'Unexpected RPATH, RUNPATH or RELR in the portable ELF.' >&2
+    exit 2
+fi
+symbols=$(LC_ALL=C readelf -VW "$binary")
+glibc=$(grep -oE 'GLIBC_[0-9]+(\.[0-9]+)+' <<< "$symbols" | sort -Vu | tail -n1) || glibc=
+ceiling=GLIBC_2.17
+if [[ -z "$glibc" || "$symbols" == *GLIBC_PRIVATE* ||
+    $(printf '%s\n' "$glibc" "$ceiling" | sort -V | tail -n1) != "$ceiling" ]]; then
+    printf 'Expected a portable glibc ELF (at most %s), got %s.\n' "$ceiling" "${glibc:-none}" >&2
+    exit 2
+fi
+notes=$(LC_ALL=C readelf -nW "$binary")
+if grep -E 'x86 ISA needed:.*x86-64-v[234]' <<< "$notes" >/dev/null; then
+    printf '%s\n' 'Expected x86-64-v1 without a higher required ISA level.' >&2
+    exit 2
+fi
+cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.."
+version=$(sed -nE 's/^version = "([0-9]+\.[0-9]+\.[0-9]+)"$/\1/p' Cargo.toml)
+[[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+if [[ $(env -i "$binary" --version) != "NSH (Neo SH) $version" ]]; then
+    printf 'Expected the NSH %s executable.\n' "$version" >&2
+    exit 2
+fi
+
+output=${NSH_RPM_OUTPUT_DIR:-packages}
+mkdir -p .build "$output" logs
+stage=$(mktemp -d "$PWD/.build/rpm.XXXXXXXX")
+container=
+cleanup() {
+    if [[ -n "$container" ]]; then
+        docker rm -f "$container" >/dev/null
+    fi
+    rm -rf -- "$stage"
+}
+trap cleanup EXIT
+
+payload="$stage/payload"
+documentation="$payload/usr/share/doc/nsh"
+licenses="$payload/usr/share/licenses/nsh"
+install -Dm755 "$binary" "$payload/usr/bin/nsh"
+install -Dm644 LICENSE "$licenses/LICENSE"
+for license in docs/licenses/*; do
+    install -Dm644 "$license" "$licenses/${license##*/}"
+done
+for document in README.md CHANGELOG.md LICENSE MANUALS/*.md MANUALS/nsh.1 MANUALS/benchmarks/* benchmarks/shells.svg; do
+    install -Dm644 "$document" "$documentation/$document"
+done
+while IFS= read -r -d '' example; do
+    install -Dm644 "$example" "$documentation/$example"
+done < <(find examples -type f -print0)
+install -d "$payload/usr/share/man/man1"
+gzip -n -9 -c MANUALS/nsh.1 > "$payload/usr/share/man/man1/nsh.1.gz"
+
+epoch=${SOURCE_DATE_EPOCH:-1794700800}
+tar --sort=name --mtime="@$epoch" --numeric-owner --owner=0 --group=0 \
+    -C "$payload" -cf "$stage/nsh-payload.tar" usr
+docker build --platform linux/amd64 --iidfile "$stage/image" packaging/rpm \
+    2>&1 | tee logs/rpm-builder.log
+image=$(cat "$stage/image")
+container=$(docker create -i --network none --security-opt no-new-privileges --cap-drop ALL "$image" \
+    /bin/bash -euc '
+        export HOME=/work SOURCE_DATE_EPOCH="$1"
+        tar -xf -
+        mkdir -p SOURCES
+        mv nsh-payload.tar SOURCES/
+        rpmbuild --target x86_64 --define "_topdir /work" --define "nsh_version $2" -bb nsh.spec
+    ' nsh-rpm "$epoch" "$version")
+cp -- packaging/rpm/nsh.spec "$stage/"
+tar -C "$stage" -cf - nsh-payload.tar nsh.spec | docker start -ai "$container" 2>&1 | tee logs/rpm-build.log
+[[ "$(docker inspect -f '{{.State.ExitCode}}' "$container")" == 0 ]]
+package="nsh-$version-1.x86_64.rpm"
+docker cp "$container:/work/RPMS/x86_64/$package" "$stage/$package"
+install -m644 "$stage/$package" "$output/$package"
+sha256sum "$output/$package"

@@ -6,11 +6,21 @@ NSH — оболочка для Linux со своим интерпретатор
 
 ## Установка
 
-Загрузите `nsh-0.2.1-2-x86_64.pkg.tar.zst` и `SHA256SUMS` из [текущего релиза](https://github.com/AdrescorGiti/NSH/releases/latest). Из каталога загрузки выполните:
+Выберите пакет для своей системы и скачайте файл контрольных сумм `SHA256SUMS`. [Текущий релиз](https://github.com/AdrescorGiti/NSH/releases/latest)
+
+| Дистрибутивы | Пакет | Установка |
+|---|---|---|
+| Arch Linux, CachyOS | `.pkg.tar.zst` | `sudo pacman -U -- ./nsh-0.2.1-2-x86_64.pkg.tar.zst` |
+| Debian, Ubuntu и совместимые системы | `.deb` | `sudo apt install ./nsh_0.2.1-1_amd64.deb` |
+| Fedora, RHEL-совместимые системы, ROSA | `.rpm` | `sudo dnf install ./nsh-0.2.1-1.x86_64.rpm` |
+
+Перед установкой проверьте файл в каталоге загрузки.
 
 ~~~sh
-sha256sum --ignore-missing -c SHA256SUMS && sudo pacman -U ./nsh-0.2.1-2-x86_64.pkg.tar.zst
+sha256sum --ignore-missing -c SHA256SUMS
 ~~~
+
+DEB и RPM используют один бинарник для x86-64-v1 с glibc от 2.17. Установка проверена на Debian, Ubuntu, Fedora, Red Hat UBI и ROSA Fresh. [Версии, зависимости и сборка пакетов](MANUALS/PACKAGE.md#debian-и-rpm-дистрибутивы)
 
 Для сборки из исходников нужны Linux, Rust 1.85+ и системный C-компилятор.
 

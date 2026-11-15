@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.."
+
+if [[ ${1:-} == --help ]]; then
+    printf 'Usage: %s [output-elf]\n' "$0"
+    printf '%s\n' 'Builds the x86-64 baseline ELF against glibc 2.17 with Docker and rustup.'
+    exit 0
+fi
+if (( $# > 1 )) || [[ $(uname -m) != x86_64 ]]; then
+    printf 'Usage on an x86_64 Linux host: %s [output-elf]\n' "$0" >&2
+    exit 2
+fi
+
+workspace=$PWD/.build/portable-builder
+output=${1:-$workspace/nsh}
+toolchain=${NSH_PORTABLE_TOOLCHAIN:-1.98.1}
+image=quay.io/pypa/manylinux2014_x86_64@sha256:e6a785657009c612fe2a85fa933051d03a50ba62b1c5e47d62abcab546a2e423
+
+if ! rustc=$(rustup which --toolchain "$toolchain" rustc 2>/dev/null); then
+    rustc=$(rustup which --toolchain stable rustc)
+    if [[ $("$rustc" --version | cut -d ' ' -f2) != "$toolchain" ]]; then
+        printf 'Install the Rust toolchain with rustup toolchain install %s.\n' "$toolchain" >&2
+        exit 1
+    fi
+fi
+rust_bin=${rustc%/*}
+mkdir -p -- "$workspace/target" "$(dirname -- "$output")"
+stage=$(mktemp -d "$workspace/stage.XXXXXXXX")
+trap 'rm -rf -- "$stage"' EXIT
+"$rust_bin/cargo" vendor --locked "$stage/vendor" > /dev/null
+mkdir -- "$stage/cargo"
+cat > "$stage/cargo/config.toml" <<'EOF'
+[source.crates-io]
+replace-with = "vendored-sources"
+
+[source.vendored-sources]
+directory = "/vendor"
+EOF
+
+docker run --rm --network none --platform linux/amd64 --user "$(id -u):$(id -g)" \
+    --volume "$PWD:/src:ro" --workdir /src \
+    --volume "$stage/vendor:/vendor:ro" --volume "$stage/cargo:/cargo" \
+    --volume "${rust_bin%/*}:/rust:ro" --volume "$workspace/target:/target" \
+    --env CARGO_HOME=/cargo --env CARGO_TARGET_DIR=/target --env RUSTC=/rust/bin/rustc \
+    --env RUSTFLAGS='-C target-cpu=x86-64' \
+    --env CFLAGS_x86_64_unknown_linux_gnu='-O3 -march=x86-64 -mtune=generic' \
+    --env CC_x86_64_unknown_linux_gnu=gcc \
+    "$image" /bin/bash -euc '
+        getconf GNU_LIBC_VERSION
+        gcc --version | head -n1
+        /rust/bin/rustc --version
+        exec /rust/bin/cargo build --frozen --release --target x86_64-unknown-linux-gnu
+    '
+
+binary=$workspace/target/x86_64-unknown-linux-gnu/release/nsh
+floor=$(readelf --version-info --wide "$binary" | grep -oE 'GLIBC_[0-9]+(\.[0-9]+)+' | sort -Vu | tail -n1)
+if [[ $(printf '%s\n' "$floor" GLIBC_2.17 | sort -V | tail -n1) != GLIBC_2.17 ]]; then
+    printf 'Unexpected glibc dependency %s.\n' "$floor" >&2
+    exit 1
+fi
+if readelf -n "$binary" | grep -Eq 'x86 ISA needed:.*x86-64-v[234]'; then
+    printf '%s\n' 'The ELF requires a CPU newer than the x86-64 baseline.' >&2
+    exit 1
+fi
+install -m755 -- "$binary" "$output"
+printf '%s (glibc floor %s)\n' "$output" "$floor"
+sha256sum "$output"

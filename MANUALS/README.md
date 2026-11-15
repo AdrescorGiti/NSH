@@ -7,6 +7,6 @@
 | Написать Lua-плагин, команду, тему или провайдер редактора | [Туториал и Lua API](PLUGIN_API.md) |
 | Настроить готовые подсказки, подсветку и цветную тему | [File Suggestions](FILE_SUGGESTIONS.md), [Syntax Colors](SYNTAX_COLORS.md), [Aurora Theme](AURORA_THEME.md) |
 | Проверить метрики или сравнить сборки на своей машине | [Бенчмарки](BENCHMARKS.md), [методика профилирования](PERFORMANCE.md) |
-| Собрать Arch-пакет или проверить возврат к прежней оболочке | [Пакет Arch](PACKAGE.md), [login shell](LOGIN.md) |
+| Собрать или установить DEB, RPM или Arch-пакет | [Пакеты NSH](PACKAGE.md), [login shell](LOGIN.md) |
 | Проверить синтаксис POSIX, архитектуру и зависимости | [POSIX](POSIX.md), [архитектура](ARCHITECTURE.md), [зависимости](DEPENDENCIES.md), [проверка сборки](IMPLEMENTATION.md) |
 | Открыть справку в терминале | `man nsh` или [исходник man-страницы](nsh.1) |

@@ -2,6 +2,7 @@ use std::ffi::{CStr, CString};
 use std::fs::File;
 use std::io::{self, Seek, SeekFrom, Write};
 use std::os::fd::{AsRawFd, FromRawFd, IntoRawFd, OwnedFd, RawFd};
+use std::os::unix::ffi::OsStrExt;
 use std::os::unix::fs::FileExt;
 use std::sync::atomic::{AtomicU64, Ordering};
 
@@ -140,14 +141,37 @@ pub fn open(path: &[u8], flags: i32) -> io::Result<OwnedFd> {
 }
 
 pub fn data_file(data: &[u8], min: RawFd) -> io::Result<OwnedFd> {
-    // memfd_create yields an anonymous file that is never visible in the filesystem.
+    // The Linux syscall avoids a dependency on the GLIBC_2.27 wrapper.
+    let name = c"nsh-heredoc";
+    let fd = unsafe { libc::syscall(libc::SYS_memfd_create, name.as_ptr(), libc::MFD_CLOEXEC) };
+    let mut handle = if fd >= 0 {
+        // The syscall returns an owned file descriptor on success.
+        unsafe { File::from_raw_fd(fd as RawFd) }
+    } else {
+        let error = io::Error::last_os_error();
+        if !matches!(
+            error.raw_os_error(),
+            Some(libc::ENOSYS | libc::EPERM | libc::EACCES)
+        ) {
+            return Err(error);
+        }
+        temporary_data_file()?
+    };
+    handle.write_all(data)?;
+    handle.seek(SeekFrom::Start(0))?;
+    dup_min(handle.as_raw_fd(), min)
+}
+
+fn temporary_data_file() -> io::Result<File> {
+    let path = std::env::temp_dir().join("nsh.XXXXXX");
+    let mut name = CString::new(path.as_os_str().as_bytes())?.into_bytes_with_nul();
+    // mkostemp creates an exclusive 0600 file and fills in the template. Unlink it
+    // before writing data so only the open descriptor can access the contents.
     unsafe {
-        let name = c"nsh-heredoc";
-        let fd = cvt(libc::memfd_create(name.as_ptr(), libc::MFD_CLOEXEC))?;
-        let mut handle = File::from_raw_fd(fd);
-        handle.write_all(data)?;
-        handle.seek(SeekFrom::Start(0))?;
-        dup_min(handle.as_raw_fd(), min)
+        let fd = cvt(libc::mkostemp(name.as_mut_ptr().cast(), libc::O_CLOEXEC))?;
+        let handle = File::from_raw_fd(fd);
+        cvt(libc::unlink(name.as_ptr().cast()))?;
+        Ok(handle)
     }
 }
 

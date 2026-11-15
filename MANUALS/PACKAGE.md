@@ -1,4 +1,48 @@
-# Пакет Arch Linux и CachyOS
+# Пакеты NSH для Linux
+
+## Debian и RPM-дистрибутивы
+
+Пакеты DEB (`amd64`) и RPM (`x86_64`) содержат один и тот же оптимизированный бинарник. Rust и встроенная Lua собираются для базового x86-64-v1. Бинарник использует системную glibc от 2.17 и системную библиотеку поддержки GCC. Поддержка Lua встроена. Пакеты устанавливают `nsh`, руководства и примеры плагинов. Оболочка входа меняется отдельной командой.
+
+Проверьте контрольные суммы из каталога с пакетами.
+
+```sh
+sha256sum --ignore-missing -c SHA256SUMS-portable.txt
+```
+
+В Debian и Ubuntu установите файл через APT.
+
+```sh
+sudo apt install ./nsh_0.2.1-1_amd64.deb
+```
+
+В Fedora и совместимых системах с DNF установите RPM.
+
+```sh
+sudo dnf install ./nsh-0.2.1-1.x86_64.rpm
+```
+
+На системах с YUM используется `sudo yum localinstall ./nsh-0.2.1-1.x86_64.rpm`. На старых Debian, где APT ещё не принимает локальный путь, используйте `sudo dpkg -i ./nsh_0.2.1-1_amd64.deb` после установки зависимостей. После установки выполните `nsh --version`.
+
+Требования к процессору и ядру самой системы определяются дистрибутивом. Для смены оболочки входа нужно дополнительно установить системный `chsh` и зарегистрировать `/usr/bin/nsh` в `/etc/shells`. [Руководство по login shell](LOGIN.md)
+
+Установка, запуск и удаление проверены на Debian 8, 10 и 13, Ubuntu 16.04, Fedora 45, Red Hat UBI 7.9 и 8.10 и ROSA Fresh 12.4. Скрипты и Lua-плагин также проверены в QEMU с базовым набором инструкций x86-64 и glibc 2.17.
+
+### Сборка DEB и RPM
+
+Понадобятся Docker, rustup с Rust 1.98.1 и binutils. Для DEB нужен `dpkg-deb`. RPM собирается контейнерным `rpmbuild`. Все команды выполняются из корня проекта.
+
+```sh
+tools/build-portable .build/portable/nsh
+tools/package-deb .build/portable/nsh
+tools/package-rpm .build/portable/nsh
+(
+    cd packages
+    sha256sum nsh_0.2.1-1_amd64.deb nsh-0.2.1-1.x86_64.rpm > SHA256SUMS-portable.txt
+)
+```
+
+## Arch Linux и CachyOS
 
 `tools/package-arch` формирует архив исходников из содержимого проекта, вычисляет SHA-256, подставляет его в PKGBUILD и использует чистый образ Arch Linux x86_64. Базовый образ закреплён по дайджесту, пакеты среды сборки берутся из Arch Linux Archive за 15 ноября 2026 года. `makepkg` запускается через `chroot --userspec=nshbuild:nshbuild` в чистом корне контейнера без монтирования каталогов хоста. Cargo загружает зависимости согласно `Cargo.lock` на стадии `prepare`. Стадии сборки и проверки используют `--frozen`.
 
