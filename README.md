@@ -1,5 +1,8 @@
 # NSH — Neo SH
 
+<img width="1040" height="300" alt="NSH-github-banner" src="https://github.com/user-attachments/assets/16640a8d-6fb8-4707-a912-ab16ac3b57c6" />
+
+
 **Just Vanilla SH.**
 
 NSH — оболочка для Linux со своим интерпретатором на Rust. Обычные скрипты выполняются в POSIX-ориентированном режиме. В интерактивном сеансе Lua-плагины могут добавлять команды, менять приглашение и подсвечивать ввод. Поддерживаемый синтаксис перечислен в [справочнике POSIX](MANUALS/POSIX.md).
