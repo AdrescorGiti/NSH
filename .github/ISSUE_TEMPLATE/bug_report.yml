@@ -1,5 +1,5 @@
 
-name: "🐛 Bug Report / Сообщить об ошибке"
+name: " Bug Report / Сообщить об ошибке"
 description: "Report an NSH bug / Сообщить об ошибке NSH"
 title: "[BUG] "
 labels:
@@ -9,7 +9,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        ## 🐛 NSH Bug Report
+        ##  NSH Bug Report
 
         Thank you for helping improve NSH!
 
@@ -24,7 +24,7 @@ body:
   - type: textarea
     id: description
     attributes:
-      label: "📝 Description / Описание ошибки"
+      label: " Description / Описание ошибки"
       description: "What happened? / Что произошло?"
       placeholder: |
         EN: Describe the bug clearly.
@@ -36,7 +36,7 @@ body:
   - type: textarea
     id: reproduction
     attributes:
-      label: "🔁 Steps to Reproduce / Как воспроизвести"
+      label: " Steps to Reproduce / Как воспроизвести"
       description: "How can we reproduce this bug? / Как повторить ошибку?"
       placeholder: |
         1. Launch NSH / Запустите NSH
@@ -48,7 +48,7 @@ body:
   - type: textarea
     id: expected
     attributes:
-      label: "✅ Expected Behavior / Ожидаемое поведение"
+      label: " Expected Behavior / Ожидаемое поведение"
       description: "What should happen? / Что должно происходить?"
     validations:
       required: true
@@ -56,7 +56,7 @@ body:
   - type: textarea
     id: actual
     attributes:
-      label: "❌ Actual Behavior / Фактическое поведение"
+      label: " Actual Behavior / Фактическое поведение"
       description: "What happened instead? / Что произошло на самом деле?"
     validations:
       required: true
@@ -64,7 +64,7 @@ body:
   - type: input
     id: version
     attributes:
-      label: "📦 NSH Version / Версия NSH"
+      label: " NSH Version / Версия NSH"
       placeholder: "e.g. v0.3.0, main branch, commit SHA"
     validations:
       required: true
@@ -72,7 +72,7 @@ body:
   - type: dropdown
     id: operating-system
     attributes:
-      label: "💻 Operating System / Операционная система"
+      label: " Operating System / Операционная система"
       options:
         - "Arch Linux / CachyOS"
         - "Debian / Ubuntu"
@@ -89,7 +89,7 @@ body:
   - type: textarea
     id: environment
     attributes:
-      label: "⚙️ Environment / Окружение"
+      label: " Environment / Окружение"
       description: "Kernel, architecture, terminal / Ядро, архитектура, терминал"
       placeholder: |
         Distribution / Дистрибутив:
@@ -100,7 +100,7 @@ body:
   - type: dropdown
     id: component
     attributes:
-      label: "🧩 Affected Component / Компонент"
+      label: " Affected Component / Компонент"
       options:
         - "Command execution / Выполнение команд"
         - "POSIX compatibility / Совместимость с POSIX"
@@ -117,7 +117,7 @@ body:
   - type: textarea
     id: logs
     attributes:
-      label: "📋 Logs / Логи"
+      label: " Logs / Логи"
       description: "Paste relevant output. Remove secrets! / Вставьте вывод без паролей и токенов!"
       render: shell
       placeholder: "Paste terminal output here / Вставьте вывод терминала"
@@ -125,13 +125,13 @@ body:
   - type: textarea
     id: additional
     attributes:
-      label: "📎 Additional Context / Дополнительная информация"
+      label: " Additional Context / Дополнительная информация"
       description: "Screenshots, configuration, details / Скриншоты, конфигурация, детали"
 
   - type: checkboxes
     id: checklist
     attributes:
-      label: "☑️ Checklist / Проверка"
+      label: " Checklist / Проверка"
       options:
         - label: "I searched existing issues / Я проверил существующие Issues"
           required: true
