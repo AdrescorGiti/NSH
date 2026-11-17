@@ -1,0 +1,120 @@
+
+name: " Feature Request / Предложить функцию"
+description: "Suggest a feature or improvement for NSH / Предложить улучшение NSH"
+title: "[FEATURE] "
+labels:
+  - enhancement
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ##  NSH Feature Request
+
+        Thank you for helping make NSH better!
+        Спасибо, что помогаете развивать NSH!
+
+        You can write in English or Russian.
+        Вы можете писать на русском или английском.
+
+        Please check existing issues before submitting.
+        Перед отправкой проверьте существующие Issues.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: " Problem / Какую проблему решает функция?"
+      description: "Explain the problem or limitation / Опишите проблему или ограничение"
+      placeholder: |
+        EN: I'm having trouble with...
+
+        RU: Мне не хватает возможности...
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: " Proposed Solution / Предлагаемое решение"
+      description: "Describe how the feature should work / Опишите, как должна работать функция"
+      placeholder: |
+        EN: I suggest adding...
+
+        RU: Я предлагаю добавить...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: " Feature Category / Категория"
+      options:
+        - "Shell core / Ядро shell"
+        - "POSIX compatibility / Совместимость с POSIX"
+        - "Lua plugins / Lua-плагины"
+        - "Interactive editor / Интерактивный редактор"
+        - "Autocomplete / Автодополнение"
+        - "Syntax highlighting / Подсветка синтаксиса"
+        - "Configuration / Конфигурация"
+        - "Performance / Производительность"
+        - "Developer tools / Инструменты разработчика"
+        - "Documentation / Документация"
+        - "Other / Другое"
+    validations:
+      required: true
+
+  - type: textarea
+    id: examples
+    attributes:
+      label: " Usage Examples / Примеры использования"
+      description: "Show commands, configuration or Lua code / Покажите команды, конфигурацию или Lua-код"
+      render: shell
+      placeholder: |
+        # Example / Пример
+        nsh --example
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: " Alternatives / Альтернативы"
+      description: "Have you considered other solutions? / Рассматривали ли вы другие решения?"
+    validations:
+      required: false
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: " Importance / Важность для вас"
+      options:
+        - "Low / Низкая"
+        - "Medium / Средняя"
+        - "High / Высокая"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: " Contribution / Участие в разработке"
+      description: "Would you like to help implement this feature? / Хотите помочь с реализацией?"
+      options:
+        - label: "I can help implement this / Я могу помочь с реализацией"
+        - label: "I can help test this / Я могу помочь с тестированием"
+        - label: "I can help with documentation / Я могу помочь с документацией"
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: " Additional Context / Дополнительная информация"
+      description: "Mockups, links, screenshots or ideas / Макеты, ссылки, скриншоты или идеи"
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: " Checklist / Проверка"
+      options:
+        - label: "I searched existing issues / Я проверил существующие Issues"
+          required: true
+        - label: "This request is related to NSH / Предложение относится к NSH"
+         
+          required: true
