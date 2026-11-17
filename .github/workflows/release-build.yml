@@ -1,0 +1,34 @@
+name: Build release binary
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  linux-x86-64:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo build --locked --release --target x86_64-unknown-linux-gnu
+      - name: Smoke test and package
+        run: |
+          target/x86_64-unknown-linux-gnu/release/nsh --vanilla -c 'printf "release smoke test\\n"'
+          mkdir -p dist
+          cp target/x86_64-unknown-linux-gnu/release/nsh dist/nsh
+          tar -C dist -czf dist/nsh-linux-x86_64.tar.gz nsh
+          cd dist
+          sha256sum nsh-linux-x86_64.tar.gz > SHA256SUMS
+          sha256sum -c SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nsh-linux-x86_64
+          path: |
+            dist/nsh-linux-x86_64.tar.gz
+            dist/SHA256SUMS
+          if-no-files-found: error

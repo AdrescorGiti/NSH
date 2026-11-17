@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  rust:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - run: cargo fmt --all -- --check
+      - run: cargo clippy --locked --all-targets -- -D warnings
+      - run: cargo test --locked
+      - run: cargo build --locked --release
+      - name: CLI and integration tests
+        run: |
+          for test in core printf hash plugins lua_plugins performance_contracts jobs_pty startup_pty session_pty prompt_pty plugin_pty fc_pty; do
+            python3 "tests/$test.py" target/release/nsh
+          done
+  posix:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build reference shells at the versions used by the fixtures
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y autoconf automake
+          mkdir -p .build
+          git clone --depth 1 --branch v0.5.13.5 https://git.kernel.org/pub/scm/utils/dash/dash.git .build/dash-src
+          test "$(git -C .build/dash-src rev-parse HEAD)" = 037bbdfd330017c368caf6242f977974123239b5
+          (cd .build/dash-src && ./autogen.sh && ./configure && make -j2)
+          git clone --depth 1 --branch 2.61 https://github.com/magicant/yash.git .build/yash-src
+          test "$(git -C .build/yash-src rev-parse HEAD)" = 519475a68692ba3c375e40a62a39b2b48d4a431f
+          (cd .build/yash-src && ./configure && make -j2 yash)
+      - run: cargo build --locked --release
+      - name: Compare POSIX fixtures against reference shells
+        run: python3 tests/differential.py target/release/nsh --dash .build/dash-src/src/dash --dash-version 0.5.13.5 --bash /usr/bin/bash --yash .build/yash-src/yash

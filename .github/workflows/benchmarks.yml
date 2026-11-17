@@ -1,0 +1,28 @@
+name: Benchmarks
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: sudo apt-get update && sudo apt-get install -y dash zsh fish
+      - run: cargo build --locked --release
+      - name: Measure existing workloads
+        run: |
+          python3 benchmarks/run.py --nsh target/release/nsh \
+            --dash /usr/bin/dash --dash-version "$(dpkg-query -W -f='${Version}' dash)" \
+            --zsh /usr/bin/zsh --fish /usr/bin/fish --bash /usr/bin/bash \
+            --skip-trace --output-dir .build/ci-benchmarks
+      - uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: .build/ci-benchmarks/
+          include-hidden-files: true
+          if-no-files-found: error
