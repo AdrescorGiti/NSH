@@ -11,7 +11,8 @@ WORKDIR /opt/nsh
 COPY --from=builder /opt/nsh/target/release/nsh target/release/nsh
 COPY tests ./tests
 COPY examples ./examples
-RUN git clone --depth 1 --branch v0.5.13.5 https://git.kernel.org/pub/scm/utils/dash/dash.git /tmp/dash && \
+RUN (timeout 30s git clone --depth 1 --branch v0.5.13.5 https://github.com/herbertx/dash.git /tmp/dash || \
+    (rm -rf /tmp/dash && timeout 30s git clone --depth 1 --branch v0.5.13.5 https://git.kernel.org/pub/scm/utils/dash/dash.git /tmp/dash)) && \
     test "$(git -C /tmp/dash rev-parse HEAD)" = 037bbdfd330017c368caf6242f977974123239b5 && \
     cd /tmp/dash && ./autogen.sh && ./configure && make -j2 && install src/dash /usr/local/bin/hardtest-dash && \
     git clone --depth 1 --branch 2.61 https://github.com/magicant/yash.git /tmp/yash && \
