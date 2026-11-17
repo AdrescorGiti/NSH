@@ -1,0 +1,140 @@
+
+name: "🐛 Bug Report / Сообщить об ошибке"
+description: "Report an NSH bug / Сообщить об ошибке NSH"
+title: "[BUG] "
+labels:
+  - bug
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 🐛 NSH Bug Report
+
+        Thank you for helping improve NSH!
+
+        Спасибо, что помогаете улучшать NSH!
+
+        Please fill out this form in English or Russian.
+        Заполните форму на русском или английском языке.
+
+        Before submitting, check for existing issues.
+        Перед отправкой проверьте существующие Issues.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: "📝 Description / Описание ошибки"
+      description: "What happened? / Что произошло?"
+      placeholder: |
+        EN: Describe the bug clearly.
+
+        RU: Подробно опишите ошибку.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: "🔁 Steps to Reproduce / Как воспроизвести"
+      description: "How can we reproduce this bug? / Как повторить ошибку?"
+      placeholder: |
+        1. Launch NSH / Запустите NSH
+        2. Execute command / Выполните команду
+        3. Observe the error / Получите ошибку
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: "✅ Expected Behavior / Ожидаемое поведение"
+      description: "What should happen? / Что должно происходить?"
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: "❌ Actual Behavior / Фактическое поведение"
+      description: "What happened instead? / Что произошло на самом деле?"
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: "📦 NSH Version / Версия NSH"
+      placeholder: "e.g. v0.3.0, main branch, commit SHA"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: operating-system
+    attributes:
+      label: "💻 Operating System / Операционная система"
+      options:
+        - "Arch Linux / CachyOS"
+        - "Debian / Ubuntu"
+        - "Fedora / RHEL"
+        - "openSUSE"
+        - "Gentoo"
+        - "Alpine Linux"
+        - "Other Linux / Другой Linux"
+        - "macOS"
+        - "Other / Другое"
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: "⚙️ Environment / Окружение"
+      description: "Kernel, architecture, terminal / Ядро, архитектура, терминал"
+      placeholder: |
+        Distribution / Дистрибутив:
+        Kernel / Ядро:
+        Architecture / Архитектура:
+        Terminal / Терминал:
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: "🧩 Affected Component / Компонент"
+      options:
+        - "Command execution / Выполнение команд"
+        - "POSIX compatibility / Совместимость с POSIX"
+        - "Interactive editor / Интерактивный редактор"
+        - "Lua plugins / Lua-плагины"
+        - "Configuration / Конфигурация"
+        - "History / История команд"
+        - "Installation / Установка"
+        - "Performance / Производительность"
+        - "Other / Другое"
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: "📋 Logs / Логи"
+      description: "Paste relevant output. Remove secrets! / Вставьте вывод без паролей и токенов!"
+      render: shell
+      placeholder: "Paste terminal output here / Вставьте вывод терминала"
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: "📎 Additional Context / Дополнительная информация"
+      description: "Screenshots, configuration, details / Скриншоты, конфигурация, детали"
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: "☑️ Checklist / Проверка"
+      options:
+        - label: "I searched existing issues / Я проверил существующие Issues"
+          required: true
+        - label: "I removed sensitive information / Я удалил конфиденциальные данные"
+          required: true
+          
