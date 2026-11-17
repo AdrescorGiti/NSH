@@ -1,0 +1,7 @@
+.git
+.build
+target
+logs
+packages
+__pycache__
+*.pyc

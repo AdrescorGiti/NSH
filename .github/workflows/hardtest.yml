@@ -1,0 +1,66 @@
+name: HardTest
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: '0 4 * * 0'
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: Test profile
+        type: choice
+        options: [QUICK, STRESS, EXTREME]
+        default: STRESS
+        required: true
+      verify_failure_artifact:
+        description: Deliberately fail after the tests to verify artifact upload
+        type: boolean
+        default: false
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  hardtest:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select profile
+        env:
+          DISPATCH_PROFILE: ${{ inputs.profile }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then
+            profile="$DISPATCH_PROFILE"
+          elif [ "$GITHUB_EVENT_NAME" = schedule ]; then
+            profile=STRESS
+          else
+            profile=QUICK
+          fi
+          printf 'PROFILE=%s\n' "$profile" >> "$GITHUB_ENV"
+      - run: mkdir -p .build/hardtest
+      - name: Build isolated test image
+        run: docker build -f hardtest/Dockerfile -t nsh-hardtest:local .
+      - name: Test isolation and failure handling
+        run: python3 hardtest/runner.py --selftest
+      - name: Run HardTest
+        run: python3 hardtest/runner.py --profile "$PROFILE"
+      - name: Deliberately fail to test artifact upload
+        if: github.event_name == 'workflow_dispatch' && inputs.verify_failure_artifact
+        run: exit 1
+      - name: Remove leftover containers
+        if: always()
+        run: |
+          ids=$(docker ps -aq --filter label=nsh-hardtest=true)
+          if [ -n "$ids" ]; then docker rm -f $ids; fi
+      - name: Upload reports even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hardtest-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .build/hardtest/
+          include-hidden-files: true
+          if-no-files-found: warn
