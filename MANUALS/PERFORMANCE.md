@@ -1,20 +1,28 @@
-# Профилирование NSH
+<a id="профилирование-nsh"></a>
 
-[Сравнение пяти оболочек и методика замеров](BENCHMARKS.md)
+# Profiling NSH
 
-## Разбор и выполнение
+[Русская версия](PERFORMANCE.ru.md)
 
-Парсер хранит три токена предпросмотра в своей структуре. При раскрытии алиасов с дополнительными токенами задействуется отдельная очередь. Неизменённый текст токена заимствуется из исходной строки. Собственный буфер используется для продолжений строки и слов, которые сохраняются в AST.
+[Comparison of five shells and measurement methodology](BENCHMARKS.md)
 
-Короткие арифметические выражения используют восемь узлов в стеке, длинные растут в одном массиве. Числовые значения переменных читаются из существующих байтов.
+<a id="разбор-и-выполнение"></a>
 
-Простые шаблоны сравниваются по байтам, POSIX-шаблоны с метасимволами проходят через `fnmatch`. Снятие префикса или суффикса компилирует шаблон один раз и переиспользует буфер при проверке границ.
+## Parsing and execution
 
-## Счётчики выделений
+The parser keeps three lookahead tokens in its structure. A separate queue is used when alias expansion adds tokens. Unchanged token text is borrowed from the source line. An owned buffer is used for line continuations and words retained in the AST.
+
+Short arithmetic expressions use eight stack nodes; longer expressions grow in a single array. Numeric variable values are read from existing bytes.
+
+Simple patterns are compared byte by byte; POSIX patterns with metacharacters use `fnmatch`. Prefix or suffix removal compiles the pattern once and reuses a buffer when checking boundaries.
+
+<a id="счётчики-выделений"></a>
+
+## Allocation counters
 
 ~~~sh
 cargo build --locked --release
 python3 benchmarks/profile_allocations.py target/release/nsh --rounds 11
 ~~~
 
-Профиль использует Linux/glibc и системный C-компилятор. Временные замеры идут без перехвата аллокатора. Счётчики `malloc`, `calloc` и `realloc` собираются отдельно через `LD_PRELOAD`. Запрошенные байты включают перераспределения и показывают суммарный объём запросов к аллокатору.
+Profiling uses Linux/glibc and the system C compiler. Timings are measured without intercepting the allocator. The `malloc`, `calloc` and `realloc` counts are collected separately through `LD_PRELOAD`. Requested bytes include reallocations and represent the total volume of allocator requests.

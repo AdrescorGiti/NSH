@@ -1,8 +1,12 @@
-# Текущий выпуск NSH 0.2.1
+<a id="текущий-выпуск-nsh-021"></a>
 
-- Собственный POSIX-ориентированный интерпретатор на Rust. Скрипты запускаются без инициализации Lua.
-- Встроенная Lua 5.4 с API 1. Плагины добавляют команды, меняют переменные и каталог сеанса, настраивают меню, приглашение, подсветку и подсказки. Поддерживаются модули, палитры, зависимости и перезагрузка плагинов.
-- Транзакционная конфигурация профилей, диагностика с файлом и строкой, проверка через `nsh config check`.
-- Управление заданиями, режим восстановления и проверяемая смена login shell.
-- Пакеты для Arch Linux и CachyOS, DEB для Debian и Ubuntu, RPM для Fedora, RHEL-совместимых систем и ROSA. DEB и RPM используют общий бинарник x86-64-v1 с glibc от 2.17.
-- [Руководства](MANUALS/) и [бенчмарки NSH, Dash, Zsh, Fish и Bash](MANUALS/benchmarks/current.md).
+# Current release: NSH 0.2.1
+
+[Русская версия](CHANGELOG.ru.md)
+
+- A POSIX-oriented shell interpreter written in Rust. Scripts run without initializing Lua.
+- Bundled Lua 5.4 with API 1. Plugins can add commands, change session variables and working directory, and customize menus, prompts, highlighting and suggestions. Modules, palettes, dependencies and plugin reloads are supported.
+- Transactional profile configuration, diagnostics with file and line information, and validation through `nsh config check`.
+- Job control, recovery mode, and a verifiable way to change the login shell.
+- Packages for Arch Linux and CachyOS, DEB packages for Debian and Ubuntu, and RPM packages for Fedora, RHEL-compatible systems and ROSA. DEB and RPM use a shared x86-64-v1 binary with glibc 2.17 or later.
+- [Guides](MANUALS/) and [benchmarks of NSH, Dash, Zsh, Fish and Bash](MANUALS/benchmarks/current.md).

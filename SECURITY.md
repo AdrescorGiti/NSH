@@ -1,5 +1,9 @@
-# Сообщения об уязвимостях
+<a id="сообщения-об-уязвимостях"></a>
 
-Пожалуйста, не публикуйте сведения об уязвимостях и инструкции по их использованию в общедоступных issues. Используйте [приватное сообщение об уязвимости GitHub](https://github.com/AdrescorGiti/NSH/security/advisories/new), если оно доступно в репозитории. Если форма недоступна, свяжитесь с владельцем через контакты в его [профиле GitHub](https://github.com/AdrescorGiti), не раскрывая детали публично.
+# Reporting security vulnerabilities
 
-Укажите затронутую версию или commit, окружение, необходимые условия, шаги воспроизведения и возможные последствия; удалите секреты из примеров. Перед публичным раскрытием согласуйте сроки с сопровождающими. Исправления следует проверять на актуальной ветке `main`; гарантии поддержки конкретных старых выпусков не установлены.
+[Русская версия](SECURITY.ru.md)
+
+Please do not disclose vulnerability details or exploitation instructions in public issues. Use [GitHub private vulnerability reporting](https://github.com/AdrescorGiti/NSH/security/advisories/new) if it is available for the repository. If the form is unavailable, contact the owner using the contact information on their [GitHub profile](https://github.com/AdrescorGiti), without disclosing details publicly.
+
+Include the affected version or commit, environment, prerequisites, reproduction steps and potential impact; remove secrets from examples. Coordinate the disclosure timeline with the maintainers before making details public. Fixes should be checked against the current `main` branch; support for specific older releases is not guaranteed.

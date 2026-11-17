@@ -1,8 +1,12 @@
-# Участие в разработке NSH
+<a id="участие-в-разработке-nsh"></a>
 
-Предложения и pull requests принимаются на русском или английском языке. Перед созданием issue проверьте существующие обращения и используйте подходящий шаблон. Для заметных изменений сначала опишите проблему и предполагаемое решение в issue.
+# Contributing to NSH
 
-Для сборки нужны Linux, Rust 1.85 или новее, C-компилятор и Python 3. Сборка Lua включена в зависимости проекта. Из корня репозитория:
+[Русская версия](CONTRIBUTING.ru.md)
+
+Issues and pull requests are welcome in English or Russian. Before opening an issue, check existing reports and use the appropriate template. For substantial changes, first describe the problem and proposed solution in an issue.
+
+Building requires Linux, Rust 1.85 or newer, a C compiler and Python 3. Lua is built as part of the project's dependencies. From the repository root:
 
 ```sh
 cargo fmt --all -- --check
@@ -12,14 +16,14 @@ cargo build --locked --release
 python3 tests/core.py target/release/nsh
 ```
 
-CI дополнительно выполняет остальные интеграционные тесты в `tests/`. Для сравнения POSIX-сценариев нужны Dash, Bash и Yash. CI собирает Dash 0.5.13.5 и Yash 2.61: более старые версии могут не поддерживать сценарии POSIX.1-2024. Укажите пути к этим версиям:
+CI also runs the other integration tests in `tests/`. The POSIX differential tests require Dash, Bash and Yash. CI builds Dash 0.5.13.5 and Yash 2.61: older versions may not support the POSIX.1-2024 scenarios. Supply paths to those versions:
 
 ```sh
 python3 tests/differential.py target/release/nsh --dash /path/to/dash --dash-version 0.5.13.5 --bash /usr/bin/bash --yash /path/to/yash
 ```
 
-Тест проверяет зафиксированные ожидания и учитывает известные отличия эталонных оболочек; он не подтверждает полную сертификацию POSIX. Укажите изменения поведения и добавьте воспроизводимые тесты. Поддерживаемые возможности описаны в [MANUALS/POSIX.md](MANUALS/POSIX.md).
+The suite checks recorded expectations and accounts for known differences in reference shells; it does not certify full POSIX conformance. Describe behavioral changes and add reproducible tests. Supported features are described in [MANUALS/POSIX.md](MANUALS/POSIX.md).
 
-Создайте ветку, внесите изменения и откройте pull request с описанием причины и результатов проверок. Для измерений используйте существующий [порядок запуска бенчмарков](MANUALS/BENCHMARKS.md); приводите условия, версии и результаты, избегая обобщений по одному запуску. Ручной workflow Benchmarks сохраняет результаты как артефакт; общие GitHub runners не обеспечивают стабильной среды для сравнения производительности.
+Create a branch, make your changes and open a pull request explaining the reason and test results. For measurements, follow the existing [benchmark instructions](MANUALS/BENCHMARKS.md); report the conditions, versions and results, and avoid drawing general conclusions from one run. The manually triggered Benchmarks workflow saves results as an artifact; shared GitHub runners do not provide a stable environment for performance comparisons.
 
-Workflow Build release binary запускается по тегу `v*` или вручную и сохраняет архив Linux x86-64 и контрольную сумму в артефактах запуска. Бинарник собран на Ubuntu 24.04 и не заявляет совместимость с glibc 2.17; для такой сборки см. `tools/build-portable`. Workflow не публикует GitHub Release.
+The Build release binary workflow runs for `v*` tags or manually and stores a Linux x86-64 archive and checksum as run artifacts. It builds on Ubuntu 24.04 and does not claim glibc 2.17 compatibility; see `tools/build-portable` for that build. The workflow does not publish a GitHub Release.

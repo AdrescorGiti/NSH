@@ -1,13 +1,15 @@
 # Aurora Theme
 
-[Aurora Theme](../examples/plugins/aurora-theme/) показывает, как плагин объединяет своё приглашение, палитру и меню с клавиатурным управлением. Скопируйте каталог `aurora-theme` в `${XDG_CONFIG_HOME:-$HOME/.config}/nsh/plugins/` и выполните в NSH:
+[Русская версия](AURORA_THEME.ru.md)
+
+[Aurora Theme](../examples/plugins/aurora-theme/) shows how a plugin can combine a prompt, palette and keyboard-controlled menu. Copy the `aurora-theme` directory to `${XDG_CONFIG_HOME:-$HOME/.config}/nsh/plugins/` and run in NSH:
 
 ~~~sh
 nsh plugin enable aurora-theme
 ~~~
 
-Нажмите Tab на пустой строке. Up и Down меняют выбранный пункт, Escape закрывает меню. Первый Enter вставляет команду в строку, следующий запускает её.
+Press Tab on an empty line. Up and Down change the selection; Escape closes the menu. The first Enter inserts the selected command into the line, and the second executes it.
 
-В `plugin.toml` секция `[options]` задаёт цвета пути, символа успеха или ошибки, текста меню и фона выбранного пункта. Исходная палитра рассчитана на тёмный терминал. После сохранения выполните `nsh plugin reload aurora-theme`. Чтобы тема подключалась на каждом запуске, добавьте команду `nsh plugin enable aurora-theme` в `conf.sh`.
+The `[options]` section of `plugin.toml` sets colors for the path, success/error symbol, menu text and selected item background. The default palette is designed for a dark terminal. After saving changes, run `nsh plugin reload aurora-theme`. To activate the theme on every startup, add `nsh plugin enable aurora-theme` to `conf.sh`.
 
-Цвета и меню реализованы через [публичный Lua API](PLUGIN_API.md#стили-редактора). Список команд находится в массиве `shortcuts` файла `init.lua`.
+The colors and menu use the [public Lua API](PLUGIN_API.md#editor-styles). The command list is in the `shortcuts` array in `init.lua`.

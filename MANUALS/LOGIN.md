@@ -1,20 +1,26 @@
-# Login shell на Linux
+<a id="login-shell-на-linux"></a>
 
-Пакет устанавливает `/usr/bin/nsh` и документацию. Смена login shell выполняется отдельно для локальной учётной записи. NSH определяет её по реальному UID и сверяет локальную запись с системным поиском по UID и имени. Запуск от root, различие реальных и эффективных UID или GID, неоднозначная запись либо неподходящие права файлов блокируют смену.
+# Login shell on Linux
 
-1. Из рабочего терминала запустите `/usr/bin/nsh --set-default --dry-run`. NSH проверит владельца установленного файла через pacman, dpkg или RPM, доступность `/usr/bin/chsh`, регистрацию обеих оболочек и возможность отката. Если `chsh` отсутствует, установите системный пакет, который его предоставляет. Каталоги системных путей принадлежат root и доступны для записи только root. Для предыдущей оболочки допускаются доверенные симлинки, например `/bin` в системах с объединённым `/usr`.
-2. Если проверка сообщает, что `/usr/bin/nsh` отсутствует в `/etc/shells`, согласуйте отдельное изменение с администратором. Администратор добавляет точный путь отдельной строкой и сохраняет существующие записи. Повторите dry-run.
-3. Сохраните показанную команду отката и держите текущий терминал открытым. Для смены выполните `/usr/bin/nsh --set-default`. Утилита принимает ответ `yes` через управляющий терминал. После него она повторно проверяет учётную запись и запускает `/usr/bin/chsh -s /usr/bin/nsh`. Взаимодействие с PAM идёт напрямую через терминал. NSH читает изменившуюся запись и проверяет результат.
-4. Войдите заново в отдельном терминале или сеансе. Для проверки неинтерактивного вызова выполните команду через средство, которое использует оболочку из записи аккаунта. При проблеме примените сохранённую команду из исходного терминала. Повторный вызов `--set-default` для уже выбранной NSH сообщает текущее состояние без повторного запуска `chsh`.
+[Русская версия](LOGIN.ru.md)
 
-## Откат и удаление
+The package installs `/usr/bin/nsh` and documentation. Changing the login shell is a separate operation for a local account. NSH identifies the account using the real UID and cross-checks the local entry against system lookups by UID and name. Running as root, mismatched real and effective UIDs or GIDs, an ambiguous entry, or unsuitable file permissions prevent the change.
 
-Выполните точную команду, выведенную перед сменой. Если прежней оболочкой была Fish с путём `/bin/fish`, используйте следующую команду.
+1. From a working terminal run `/usr/bin/nsh --set-default --dry-run`. NSH checks ownership of the installed file using pacman, dpkg or RPM, availability of `/usr/bin/chsh`, registration of both shells, and whether rollback is possible. If `chsh` is missing, install the system package providing it. System-path directories must be owned and writable only by root. Trusted symbolic links, such as `/bin` on merged-`/usr` systems, are permitted for the previous shell.
+2. If the check reports that `/usr/bin/nsh` is absent from `/etc/shells`, coordinate a separate change with the administrator. The administrator adds the exact path on its own line and preserves existing entries. Repeat the dry run.
+3. Save the displayed rollback command and keep your current terminal open. Run `/usr/bin/nsh --set-default` to change the shell. The tool accepts `yes` through the controlling terminal. It then rechecks the account and runs `/usr/bin/chsh -s /usr/bin/nsh`. PAM interaction takes place directly through the terminal. NSH reads the changed account entry and verifies the result.
+4. Log in again in a separate terminal or session. To test noninteractive invocation, use a tool that runs the shell specified in the account entry. If there is a problem, use the saved rollback command from the original terminal. Running `--set-default` again when NSH is already selected reports the current state without rerunning `chsh`.
+
+<a id="откат-и-удаление"></a>
+
+## Rollback and removal
+
+Run the exact command displayed before the change. If the previous shell was Fish at `/bin/fish`, use:
 
 ```sh
 /usr/bin/chsh -s '/bin/fish'
 ```
 
-Проверьте запись через `getent passwd "$(id -u)"` и новый вход в отдельном терминале. После восстановления прежней оболочки пакет можно удалить через `sudo pacman -R nsh`, `sudo apt remove nsh` или `sudo dnf remove nsh`, в зависимости от системы. Запись `/usr/bin/nsh` удаляет администратор, если её добавляли для NSH и она больше не используется. Конфигурация и история пользователя хранятся в пользовательских каталогах XDG.
+Check the entry with `getent passwd "$(id -u)"` and test a new login in another terminal. Once the previous shell is restored, remove the package with `sudo pacman -R nsh`, `sudo apt remove nsh` or `sudo dnf remove nsh`, depending on the system. An administrator removes the `/usr/bin/nsh` entry if it was added for NSH and is no longer used. User configuration and history remain in user XDG directories.
 
-Страницы руководства [chsh(1)](https://man.archlinux.org/man/chsh.1.en) и [shells(5)](https://man.archlinux.org/man/shells.5.en).
+Manual pages: [chsh(1)](https://man.archlinux.org/man/chsh.1.en) and [shells(5)](https://man.archlinux.org/man/shells.5.en).

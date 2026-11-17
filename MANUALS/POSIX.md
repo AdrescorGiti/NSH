@@ -1,29 +1,35 @@
-# Проверка Shell Command Language
+<a id="проверка-shell-command-language"></a>
 
-Цель — POSIX.1-2024 (Issue 8). Отдельные более старые реализации используются в дифференциальных тестах для сравнения поведения. Эталон для Issue 8 — текст стандарта. Тесты сравнивают stdout, stderr, код и дерево файлов при одинаковых условиях. Текст диагностики там, где он не стандартизован, проверяется по факту присутствия или отсутствия. [Shell Command Language](https://pubs.opengroup.org/onlinepubs/9799919799/utilities/V3_chap02.html) · [Утилита sh](https://pubs.opengroup.org/onlinepubs/9799919799/utilities/sh.html)
+# Shell Command Language checks
 
-| Требование | Тест | Результат | Ограничение |
+[Русская версия](POSIX.ru.md)
+
+The target is POSIX.1-2024 (Issue 8). Selected older implementations are used in differential tests to compare behavior; the standard text is the authority for Issue 8. Tests compare stdout, stderr, status and filesystem state under identical conditions. Where diagnostic text is not standardized, tests check whether a diagnostic is present or absent. [Shell Command Language](https://pubs.opengroup.org/onlinepubs/9799919799/utilities/V3_chap02.html) · [sh utility](https://pubs.opengroup.org/onlinepubs/9799919799/utilities/sh.html)
+
+| Requirement | Test | Result | Limitation |
 |---|---|---|---|
-| 2.2–2.3, кавычки и токены | `syntax::tests`, differential, core | Частично | Вариант `$( (cmd) )` разбирается с пробелом. Неоднозначный префикс `$((` без пробела трактуется как арифметика. Известны ограничения в продолжении строки внутри начала подстановки и подстановке некоторых открытых конструкций из алиасов. |
-| 2.2.4 и 2.9.4.3, `$'…'` и `;&` | `test_issue8_case_dollar_quotes_pipefail`, differential | Проверено для тестовых вариантов | Декодированный NUL обрезает данный литерал. Dash может расходиться по новым конструкциям. |
-| 2.4, 2.9 и 2.10, команды, списки, группы, условия, циклы, функции | `syntax::tests`, core, differential | Частично | Сложное наложение алиасов и функции с именами встроенных команд проверены ограниченно. |
-| 2.5, 2.6, переменные, пустые и unset, `"$@"`, IFS, подстановки, glob | core, differential | Частично | Потоки и пути обрабатываются байтами. Полный набор правил IFS и кавычек в операндах параметров, сопоставление диапазонов и многобайтовые разделители требуют дополнительных проверок. |
-| 2.6.1, тильда | differential | Частично | Тесты покрывают начало слова и присваивания. Редкие контексты и NSS проверены ограниченно. |
-| 2.6.4, арифметика | core, differential | Частично | Ленивые ветви и базовые операции проверены. Неоднозначные операторы и значения вне обычного диапазона требуют проверки. |
-| 2.7, порядок перенаправлений, закрытие и дублирование, here-doc | core, differential | Частично | Родительские дескрипторы восстанавливаются. Режим проверки защиты от перезаписи и предельные номера дескрипторов требуют дополнительных проверок. |
-| 2.8, выход при ошибке и статусы 126/127 | core, differential | Частично | Распространённые случаи протестированы. Контексты `errexit` внутри вложенных составных команд требуют расширения покрытия. |
-| 2.9.1, поиск команд и Linux `ENOEXEC` | core, differential, native | Частично | Покрыты пустой компонент PATH, разрешения, скрипт без shebang и байтовое имя. Файл с явным shebang передаётся ядру. |
-| 2.9.2, пайплайны, отрицание и `pipefail` | core, differential, jobs_pty | Частично | Проверены передача 1 MiB, статусы и часть интерактивных сигналов. |
-| 2.9.3 и разделы `wait`, `jobs`, `fg`, `bg` | core, jobs_pty | Частично | Тесты PTY проверяют foreground, остановку, продолжение и возврат терминала. Некоторые обозначения jobspec и параметры не поддерживаются. |
-| 2.15, специальные встроенные команды | core, differential | Частично | Реализованы `.`, `:`, `break`, `continue`, `eval`, `exec`, `exit`, `export`, `readonly`, `return`, `set`, `shift`, `times`, `trap`, `unset`. Полный набор опций, формы `trap` и взаимодействие с сигналами при `wait` требуют проверки. |
-| Утилиты `printf` и `test`, Issue 8 | printf, performance_contracts, differential | Частично | `printf` работает внутри NSH при выборе из системной директории в PATH. Числа с плавающей точкой имеют точность binary64. Неопределённые формы `test` и сравнения строк в иных локалях передаются выбранной внешней утилите. |
-| 1.7 (XCU), intrinsic utilities | core, differential, fc_pty, session_pty, jobs_pty | Частично | `fc` нумерует записи в сохранённом отрезке истории, а параметры `HISTFILE` и `HISTSIZE` не управляют форматом и пределом истории NSH. `ulimit`, `umask` и `kill` проверены в распространённых режимах. |
-| `sh`, параметры запуска и ENV | core, session_pty, login smoke | Частично | Проверяются аргументы, stdin и startup. ENV требует абсолютного пути к доверенному файлу и совпадающих идентификаторов. Проверки на несовпадение UID/GID требуют расширения. |
-| LC_CTYPE/LC_COLLATE | differential, jobs_pty | Частично | Дифференциальный корпус использует C, Unicode PTY — C.UTF-8. Национальные локали, многобайтовый IFS и полные правила сортировки не проверены. |
+| 2.2–2.3, quoting and tokens | `syntax::tests`, differential, core | Partial | `$( (cmd) )` is parsed with a space. Ambiguous `$((` without a space is treated as arithmetic. Known limitations involve line continuation within the start of a substitution and substitution of some open constructs from aliases. |
+| 2.2.4 and 2.9.4.3, `$'…'` and `;&` | `test_issue8_case_dollar_quotes_pipefail`, differential | Tested cases | A decoded NUL truncates this literal. Dash can differ on newer constructs. |
+| 2.4, 2.9 and 2.10, commands, lists, groups, conditions, loops, functions | `syntax::tests`, core, differential | Partial | Complex alias interactions and functions named after builtins have limited coverage. |
+| 2.5, 2.6, variables, empty and unset, `"$@"`, IFS, expansion, glob | core, differential | Partial | Streams and paths are processed as bytes. Full IFS and quoting rules in parameter operands, range matching and multibyte delimiters need further testing. |
+| 2.6.1, tilde | differential | Partial | Tests cover word beginnings and assignments. Uncommon contexts and NSS have limited coverage. |
+| 2.6.4, arithmetic | core, differential | Partial | Lazy branches and basic operations are tested. Ambiguous operators and values outside the usual range need testing. |
+| 2.7, redirection order, closing and duplication, here-doc | core, differential | Partial | Parent descriptors are restored. Overwrite protection and descriptor-number limits need further checks. |
+| 2.8, exit on error and statuses 126/127 | core, differential | Partial | Common cases are tested. `errexit` contexts within nested compound commands need broader coverage. |
+| 2.9.1, command search and Linux `ENOEXEC` | core, differential, native | Partial | Empty PATH components, permissions, scripts without a shebang and byte-oriented names are covered. A file with an explicit shebang is passed to the kernel. |
+| 2.9.2, pipelines, negation and `pipefail` | core, differential, jobs_pty | Partial | A 1 MiB transfer, statuses and some interactive signals are tested. |
+| 2.9.3 and `wait`, `jobs`, `fg`, `bg` sections | core, jobs_pty | Partial | PTY tests check foreground, stopping, continuing and terminal return. Some jobspec forms and options are unsupported. |
+| 2.15, special builtins | core, differential | Partial | `.`, `:`, `break`, `continue`, `eval`, `exec`, `exit`, `export`, `readonly`, `return`, `set`, `shift`, `times`, `trap`, `unset` are implemented. The full option set, forms of `trap` and signal interactions during `wait` need testing. |
+| `printf` and `test` utilities, Issue 8 | printf, performance_contracts, differential | Partial | `printf` runs inside NSH when selected from a system directory in PATH. Floating-point numbers use binary64 precision. Undefined forms of `test` and string comparisons in other locales are passed to the selected external utility. |
+| 1.7 (XCU), intrinsic utilities | core, differential, fc_pty, session_pty, jobs_pty | Partial | `fc` numbers entries within the saved history segment; `HISTFILE` and `HISTSIZE` do not control NSH history format or limit. `ulimit`, `umask` and `kill` are tested in common modes. |
+| `sh`, startup arguments and ENV | core, session_pty, login smoke | Partial | Arguments, stdin and startup are tested. ENV requires an absolute path to a trusted file and matching IDs. Mismatched UID/GID tests need expansion. |
+| LC_CTYPE/LC_COLLATE | differential, jobs_pty | Partial | The differential corpus uses C; Unicode PTY uses C.UTF-8. National locales, multibyte IFS and complete collation rules have not been tested. |
 
-Там, где стандарт оставляет результат неопределённым или unspecified, одно поведение внешней оболочки не считается обязательным. Значение `PATH` при отсутствии переменной в NSH по умолчанию — `/usr/bin:/bin`. Неподдерживаемые shell-расширения конкретных интерпретаторов не входят в заявленный объём.
+Where the standard leaves a result undefined or unspecified, one external shell’s behavior is not treated as mandatory. If `PATH` is unset, NSH defaults to `/usr/bin:/bin`. Unsupported interpreter-specific shell extensions are outside the stated scope.
 
-## Воспроизведение
+<a id="воспроизведение"></a>
+
+## Reproduction
 
 ```sh
 cargo fmt --check
@@ -36,4 +42,4 @@ python3 tests/session_pty.py target/release/nsh
 python3 tests/fc_pty.py target/release/nsh
 ```
 
-`python3 tests/differential.py --help` показывает флаги для путей к эталонным бинарникам. Проект проверяет POSIX-сценарии по собственному набору тестов. Дифференциальный тест печатает версии и отмечает расхождения эталонов.
+`python3 tests/differential.py --help` lists flags for paths to reference binaries. The project checks POSIX scenarios against its own test suite. The differential test prints versions and identifies reference differences.

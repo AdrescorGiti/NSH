@@ -1,74 +1,82 @@
-# Настройка NSH
+<a id="настройка-nsh"></a>
 
-NSH читает `${XDG_CONFIG_HOME:-$HOME/.config}/nsh/conf.sh` при старте обычной интерактивной сессии. Относительные значения XDG-переменных игнорируются. Файл выполняется собственным интерпретатором NSH и может содержать команды `sh`, алиасы и функции. Изменения файла видны при следующем запуске. `nsh set`, `nsh unset`, `nsh bind` и `nsh unbind` меняют только память текущей сессии. `nsh config check <файл>` проверяет синтаксис и Markdown-ограждения без выполнения файла. Типы динамических значений проверяются во время выполнения `conf.sh`.
+# Configuring NSH
 
-### Проверка старта
+[Русская версия](CONFIG.ru.md)
 
-Помещайте в `conf.sh` обычный shell-текст. При вставке примеров строки с Markdown-ограждениями, например `~~~sh`, отклоняются до выполнения. Символы ограждения внутри кавычек или тела here-document остаются данными. Диагностика указывает файл, строку и исходную команду, если она доступна.
+NSH reads `${XDG_CONFIG_HOME:-$HOME/.config}/nsh/conf.sh` at the start of a normal interactive session. Relative XDG variable values are ignored. The file runs in NSH’s own interpreter and may contain `sh` commands, aliases and functions. Changes to the file take effect at the next startup. `nsh set`, `nsh unset`, `nsh bind` and `nsh unbind` change only the current session’s memory. `nsh config check <file>` checks syntax and Markdown fences without running the file. Dynamic values are type-checked when `conf.sh` executes.
+
+<a id="проверка-старта"></a>
+
+### Startup checks
+
+Put ordinary shell text in `conf.sh`. When pasting examples, lines containing Markdown fences such as `~~~sh` are rejected before execution. Fence characters inside quotes or a here-document body remain data. Diagnostics identify the file, line and original command when available.
 
 ```sh
 nsh config check ~/.config/nsh/conf.sh
 ```
 
-У автоматической конфигурации по умолчанию пустой стандартный ввод. Команды могут явно перенаправить ввод из файла. Операция `exec программа` в сеансе, применяющем автоматическую конфигурацию, отклоняется с диагностикой. Обычный интерактивный ввод доступен после завершения startup. Ошибку команды интерпретатора сопутствующий успешный статус не скрывает. Условия, завершившиеся обычным статусом false, продолжают управлять ветвлением как в `sh`.
+Automatic configuration receives empty standard input by default. Commands can explicitly redirect input from a file. An `exec program` operation is rejected with a diagnostic while a session applies automatic configuration. Normal interactive input is available once startup completes. A subsequent successful status cannot hide an interpreter command error. Conditions that return an ordinary false status still control branches as in `sh`.
 
-При отсутствии сохранённого выбора встроенный `default` показывает двухстрочный prompt в голубой и синей палитре. Профиль `vanilla` использует короткий prompt и историю. `nsh --profile developer` добавляет путь, имя ветки Git и подсветку набранного текста. Разовый флаг имеет приоритет над сохранённым выбором. NSH применяет defaults, предков от старшего к младшему, выбранный профиль и `conf.sh` в указанном порядке. Первая значимая строка профиля может иметь вид `nsh profile inherit developer`. До запуска проверяются вся цепочка, имена и отсутствие циклов. Пользовательские профили лежат в `nsh/profiles/` внутри каталога конфигурации. `nsh profile create <имя>` создаёт новый файл. `nsh profile use <имя>` атомарно сохраняет выбор. Встроенные профили и файлы из сохранённой цепочки защищены от удаления через `nsh profile delete`. Для удаления предка сначала выберите другую рабочую цепочку.
+With no saved selection, the built-in `default` profile shows a two-line prompt in a cyan and blue palette. The `vanilla` profile uses a short prompt and history. `nsh --profile developer` adds the path, Git branch name and input highlighting. A one-time flag takes precedence over a saved selection. NSH applies defaults, ancestors from oldest to newest, the selected profile and `conf.sh`, in that order. The first meaningful line of a profile may be `nsh profile inherit developer`. Before startup, the entire chain, names and absence of cycles are checked. User profiles live in `nsh/profiles/` under the configuration directory. `nsh profile create <name>` creates a file; `nsh profile use <name>` atomically saves the selection. Built-in profiles and files in the saved chain cannot be removed with `nsh profile delete`. Select another working chain before deleting an ancestor.
 
-Управляемые настройки, привязки клавиш, регистрации hooks и состояние модулей применяются после успешной загрузки всей цепочки профилей. Синтаксическая ошибка, ошибка команды настройки или неуспешное завершение стартового файла откатывают эти изменения. Последующая успешная команда, включая обработчик `|| :`, не скрывает уже обнаруженную ошибку настройки. `conf.sh` применяется отдельным этапом поверх последнего сохранённого в памяти состояния. При ошибке в `conf.sh` оболочка использует настройки успешно загруженных профилей или встроенные значения.
+Managed settings, key bindings, hook registrations and module state are applied after the entire profile chain loads successfully. A syntax error, configuration command error or unsuccessful startup file rolls back these changes. A later successful command, including an `|| :` handler, cannot conceal an already detected configuration error. `conf.sh` is applied as a separate stage over the last state saved in memory. If `conf.sh` fails, the shell uses the successfully loaded profile settings or built-in defaults.
 
-Откат ограничен управляемым состоянием NSH. Изменения файлов и запущенные внешние процессы остаются в силе. Явные команды сохранения или удаления профилей записывают данные на диск. Обычные команды `sh` могут изменить переменные, функции и текущий каталог. Ошибки настройки в синхронной подоболочке или пайплайне отменяют всю текущую транзакцию. Фоновые команды работают в собственной копии сеанса.
+Rollback is limited to managed NSH state. File changes and external processes already started remain in effect. Explicit profile save or delete commands write to disk. Ordinary `sh` commands can change variables, functions and the working directory. Configuration errors in a synchronous subshell or pipeline cancel the entire current transaction. Background commands run in their own session copy.
 
-`--vanilla` пропускает стартовые файлы и хранит историю в памяти. `--posix` использует `ENV` при интерактивном старте с совпадающими реальными и эффективными идентификаторами. При сочетании этих флагов `--vanilla` пропускает также `ENV`. Обычные скрипты и неинтерактивный `-c` обходят конфигурацию и историю NSH. Вызов `nsh get` или `nsh set` отдельным процессом не имеет доступа к уже запущенной оболочке. Команды `config list`, `config describe`, `config check` и управление сохранёнными профилями также доступны отдельным процессом.
+`--vanilla` skips startup files and keeps history in memory. `--posix` uses `ENV` at interactive startup if real and effective IDs match. When these flags are combined, `--vanilla` also skips `ENV`. Ordinary scripts and noninteractive `-c` bypass NSH configuration and history. A separate `nsh get` or `nsh set` process cannot access an already running shell. `config list`, `config describe`, `config check` and saved profile management are also available from a separate process.
 
-Автоматически загружаемые `conf.sh`, профили и модули должны принадлежать текущему пользователю, быть обычными файлами и не разрешать запись группе или остальным. Доступ к каталогам проверяется покомпонентно через открытые дескрипторы. Символические ссылки в этих путях запрещены. Системный каталог с sticky bit, например `/tmp`, допустим как предок. Пользовательский код выполняется с вашими правами. Для аварийного запуска используйте `nsh --vanilla`.
+Automatically loaded `conf.sh`, profiles and modules must belong to the current user, be regular files and not be group- or world-writable. Directory access is checked component by component using open file descriptors. Symbolic links in these paths are prohibited. A system directory with the sticky bit, such as `/tmp`, is permitted as an ancestor. User code runs with your privileges. For emergency startup, use `nsh --vanilla`.
 
-## Реестр
+<a id="реестр"></a>
 
-138 ключей. `nsh config list` выводит полный перечень, `nsh config describe <ключ>` показывает его тип, ограничения и значение по умолчанию. `nsh get <ключ>` показывает действующее значение. `nsh unset <ключ>` восстанавливает значение по умолчанию.
+## Registry
 
-| Ключ | Тип и значение по умолчанию |
+There are 138 keys. `nsh config list` shows the full list; `nsh config describe <key>` shows the type, constraints and default. `nsh get <key>` shows the active value. `nsh unset <key>` restores the default.
+
+| Key | Type and default |
 |---|---|
-| `color.mode` | `auto`, `always` или `never`. По умолчанию `auto` |
-| `color.fallback` | `256` или `none`. По умолчанию `256` |
-| `prompt.style` | `two-line` или `minimal`. По умолчанию `two-line` |
-| `prompt.template` | Шаблон. По умолчанию пусто |
-| `prompt.symbol` | Печатная строка. По умолчанию пусто |
-| `prompt.symbol.success` | Печатная строка для `$? = 0`. По умолчанию пусто |
-| `prompt.symbol.error` | Печатная строка для `$? != 0`. По умолчанию пусто |
-| `prompt.symbol_color` | HEX. Пусто по умолчанию. Явное значение применяет общий цвет символа |
-| `prompt.symbol.success_color` | HEX `#79DEA4` для статуса 0 |
-| `prompt.symbol.error_color` | HEX `#F87183` для ненулевого статуса |
-| `prompt.user` | Логическое значение `true` |
+| `color.mode` | `auto`, `always` or `never`. By default `auto` |
+| `color.fallback` | `256` or `none`. By default `256` |
+| `prompt.style` | `two-line` or `minimal`. By default `two-line` |
+| `prompt.template` | Template. By default empty |
+| `prompt.symbol` | Printable string. By default empty |
+| `prompt.symbol.success` | Printable string for `$? = 0`. By default empty |
+| `prompt.symbol.error` | Printable string for `$? != 0`. By default empty |
+| `prompt.symbol_color` | HEX. Empty default. An explicit value applies a common symbol color |
+| `prompt.symbol.success_color` | HEX `#79DEA4` for status 0 |
+| `prompt.symbol.error_color` | HEX `#F87183` for a nonzero status |
+| `prompt.user` | Boolean `true` |
 | `prompt.user_color` | HEX `#46DBEA` |
-| `prompt.host` | Логическое значение `true` |
+| `prompt.host` | Boolean `true` |
 | `prompt.host_color` | HEX `#62B8F4` |
-| `prompt.path` | Логическое значение `true` |
+| `prompt.path` | Boolean `true` |
 | `prompt.path_color` | HEX `#69B7FF` |
-| `prompt.path_home` | Логическое значение `true`. Сокращает домашний путь до `~` |
-| `prompt.path_max` | Целое `0..4096`, по умолчанию `0` без ограничения |
-| `prompt.git` | Логическое значение `true`. Поле требует модуля `git-prompt` |
+| `prompt.path_home` | Boolean `true`. Abbreviates the home path to `~` |
+| `prompt.path_max` | Integer `0..4096`, default `0` unlimited |
+| `prompt.git` | Boolean `true`. Field requires module `git-prompt` |
 | `prompt.git_color` | HEX `#89A6C2` |
-| `prompt.git_prefix` | Печатная строка ` [` |
-| `prompt.git_suffix` | Печатная строка `]` |
-| `prompt.git_max` | Целое `0..4096`, по умолчанию `0` без ограничения |
-| `prompt.status_color` | HEX. По умолчанию пусто |
-| `cursor.style` | `default`, `block`, `underline` или `bar`. По умолчанию `default` |
-| `cursor.blink` | Логическое значение `true`. Действует при заданной форме |
-| `editor.bracketed_paste` | Логическое значение `true` |
-| `editor.max_bytes` | Целое `64..1048576`, по умолчанию `65536` байт на буфер редактора |
-| `editor.escape_timeout_ms` | Целое `5..500`, по умолчанию `35` мс ожидания продолжения клавиши |
-| `editor.beep` | Логическое значение `false` |
-| `editor.control_echo` | Логическое значение `true`. Отображает `^C` |
-| `editor.search_prompt` | Печатная строка `history search: ` |
-| `editor.ambiguous_width` | `1` или `2` колонки для Unicode с неоднозначной шириной. По умолчанию `1` |
-| `history.enabled` | Логическое значение `true`. Управляет записью и поиском |
-| `history.persistent` | Логическое значение `true`. Управляет чтением и записью диска |
-| `history.max_size` | Целое `0..50000`, по умолчанию `2000` записей |
-| `history.ignore_duplicates` | Логическое значение `false`. Сравнивает соседние записи |
-| `history.ignore_space` | Логическое значение `false`. Игнорирует строки, начинающиеся с пробела |
-| `history.search_ignore_case` | Логическое значение `false` |
+| `prompt.git_prefix` | Printable string ` [` |
+| `prompt.git_suffix` | Printable string `]` |
+| `prompt.git_max` | Integer `0..4096`, default `0` unlimited |
+| `prompt.status_color` | HEX. By default empty |
+| `cursor.style` | `default`, `block`, `underline` or `bar`. By default `default` |
+| `cursor.blink` | Boolean `true`. Applies when a shape is set |
+| `editor.bracketed_paste` | Boolean `true` |
+| `editor.max_bytes` | Integer `64..1048576`, default `65536` bytes per editor buffer |
+| `editor.escape_timeout_ms` | Integer `5..500`, default `35` ms to wait for a key continuation |
+| `editor.beep` | Boolean `false` |
+| `editor.control_echo` | Boolean `true`. Displays `^C` |
+| `editor.search_prompt` | Printable string `history search: ` |
+| `editor.ambiguous_width` | `1` or `2` columns for Unicode of ambiguous width. By default `1` |
+| `history.enabled` | Boolean `true`. Controls recording and searching |
+| `history.persistent` | Boolean `true`. Controls reading and writing to disk |
+| `history.max_size` | Integer `0..50000`, default `2000` entries |
+| `history.ignore_duplicates` | Boolean `false`. Compares adjacent entries |
+| `history.ignore_space` | Boolean `false`. Ignores lines starting with a space |
+| `history.search_ignore_case` | Boolean `false` |
 | `highlighting.command` | HEX `#8DBEFF` |
-| `highlighting.argument` | HEX. По умолчанию пусто |
+| `highlighting.argument` | HEX. By default empty |
 | `highlighting.single_quote` | HEX `#98D293` |
 | `highlighting.double_quote` | HEX `#98D293` |
 | `highlighting.variable` | HEX `#E9B980` |
@@ -80,11 +88,11 @@ nsh config check ~/.config/nsh/conf.sh
 | `highlighting.escape` | HEX `#BBA2EE` |
 | `highlighting.glob` | HEX `#E9B980` |
 
-HEX имеет вид `'#RRGGBB'`. Пустое значение выключает цвет соответствующего элемента. Переменная `NO_COLOR`, режим `TERM=dumb`, отсутствие `TERM` или перенаправленные stdin либо stderr отключают цвета NSH в любом режиме. Настоящий RGB выбирается по `COLORTERM=truecolor`, `COLORTERM=24bit` или `direct` в `TERM`. Для `*-256color` поддерживается преобразование в 256-цветную палитру. `always` выбирает RGB на цветном терминале. `never` выключает цвет. Подсветка различает типы уже введённого текста и не требует поиска программ в `PATH`.
+HEX has the form `'#RRGGBB'`. An empty value disables the corresponding element’s color. `NO_COLOR`, `TERM=dumb`, an unset `TERM`, or redirected stdin or stderr disable NSH colors in every mode. True RGB is selected by `COLORTERM=truecolor`, `COLORTERM=24bit` or `direct` in `TERM`. For `*-256color`, conversion to a 256-color palette is supported. `always` selects RGB on a color terminal; `never` disables color. Highlighting distinguishes types of already entered text and does not require looking up programs in `PATH`.
 
-В двухстрочном приглашении первая строка содержит `пользователь@хост`, путь и ветку Git, а вторая — символ `❯`. Успех окрашивает символ в зелёный, ошибка — в красный. Переключатели `prompt.user`, `prompt.host`, `prompt.path` и `prompt.git` управляют полями независимо. Для ветки Git включите `nsh module enable git-prompt`. Двухстрочный стиль выводит имя ветки без обрамления по умолчанию. Шаблоны и явные настройки могут добавить префикс и суффикс. При отсутствии пользовательского шаблона старые ключи `prompt.symbol` и `prompt.path_color` применяются к двухстрочному приглашению. Явно настроенные цвета статуса имеют приоритет над `prompt.symbol_color`.
+In the two-line prompt, the first line contains `user@host`, the path and Git branch; the second contains `❯`. Success colors the symbol green and failure colors it red. `prompt.user`, `prompt.host`, `prompt.path` and `prompt.git` control fields independently. Enable `nsh module enable git-prompt` for the Git branch. By default the two-line style displays the branch name without surrounding text; templates and explicit settings can add a prefix and suffix. Without a custom template, the legacy `prompt.symbol` and `prompt.path_color` keys apply to the two-line prompt. Explicit status colors take precedence over `prompt.symbol_color`.
 
-Шаблон использует поля `{cwd}`, `{git}`, `{symbol}`, `{status}`, `{uid}`, `{user}`, `{host}`. Перевод строки в шаблоне задаёт новую строку приглашения. `{{` и `}}` обозначают фигурные скобки. Управляющие символы путей и веток экранируются, а значения полей вставляются как текст. Поле `{git}` пусто при отсутствии Git, за пределами репозитория и при detached HEAD. Явный `PS1` имеет приоритет над шаблоном. `PS2` показывает приглашение продолжения. Цветные SGR-последовательности `PS1` и `PS2` имеют нулевую ширину при отрисовке.
+The template uses `{cwd}`, `{git}`, `{symbol}`, `{status}`, `{uid}`, `{user}` and `{host}` fields. A newline in the template creates a new prompt line. `{{` and `}}` represent braces. Control characters in paths and branches are escaped, and field values are inserted as text. `{git}` is empty if Git is unavailable, outside a repository or in detached HEAD. An explicit `PS1` takes precedence over the template. `PS2` is the continuation prompt. Colored SGR sequences in `PS1` and `PS2` have zero rendering width.
 
 ```sh
 nsh set color.mode auto
@@ -98,11 +106,13 @@ nsh set cursor.style bar
 nsh set history.max_size 10000
 ```
 
-### Клавиши
+<a id="клавиши"></a>
 
-Все 87 ключей `key.<клавиша>` принимают имя действия. `nsh bindings list` показывает действующие привязки. `nsh unbind` присваивает `none`. `nsh unset key.Tab` восстанавливает значение по умолчанию. В обоих поставляемых профилях `Tab` имеет действие `none`. Команды не предлагают списков вариантов или текста из истории при наборе.
+### Keys
 
-| Клавиши | Значения по умолчанию |
+All 87 `key.<key>` keys accept an action name. `nsh bindings list` shows active bindings. `nsh unbind` assigns `none`; `nsh unset key.Tab` restores the default. In both supplied profiles, `Tab` has the `none` action. The commands do not provide lists of choices or history text while typing.
+
+| Keys | Defaults |
 |---|---|
 | `Up`/`Down`, `Ctrl-P`/`Ctrl-N` | `history-previous`/`history-next` |
 | `Left`/`Right`, `Ctrl-B`/`Ctrl-F` | `move-left`/`move-right` |
@@ -115,9 +125,9 @@ nsh set history.max_size 10000
 | `Ctrl-Left`/`Ctrl-Right`, `Alt-Left`/`Alt-Right`, `Alt-b`/`Alt-f` | `move-word-left`/`move-word-right` |
 | `Tab`, `Escape`, `PageUp`, `PageDown`, `Insert`, `Ctrl-Up`, `Ctrl-Down`, `Alt-Up`, `Alt-Down`, `Shift-Left`, `Shift-Right`, `Shift-Up`, `Shift-Down`, `F1`–`F12` | `none` |
 | `Ctrl-G`, `Ctrl-K`, `Ctrl-O`, `Ctrl-Q`, `Ctrl-S`, `Ctrl-T`, `Ctrl-V`, `Ctrl-X`, `Ctrl-Y`, `Ctrl-Z` | `none` |
-| `Alt-a`–`Alt-z`, кроме `Alt-b` и `Alt-f` | `none` |
+| `Alt-a`–`Alt-z`, except `Alt-b` and `Alt-f` | `none` |
 
-В редакторе доступно также действие `insert-newline`. Имена клавиш отражают обычные последовательности xterm. Некоторые сочетания может перехватывать терминал или окружение рабочего стола. `Backspace` поддерживает DEL и Ctrl-H. Клавиши, посылающие одинаковую последовательность, используют одну привязку.
+The editor also provides the `insert-newline` action. Key names represent common xterm sequences. Some combinations may be intercepted by the terminal or desktop environment. `Backspace` supports DEL and Ctrl-H. Keys that send the same sequence share a binding.
 
 ```sh
 nsh bind Up history-previous
@@ -125,35 +135,39 @@ nsh bind F8 insert-newline
 nsh set key.Alt-r history-search
 ```
 
-При выходе из истории вниз восстанавливается исходный черновик и его курсор. Ctrl-R запускает явный поиск. Введите запрос и повторно нажмите Ctrl-R для перехода к предыдущему совпадению. Enter принимает найденную строку для редактирования. Escape восстанавливает черновик. Ctrl-D завершает сессию на пустой строке и удаляет следующий символ в непустой. Настройки редактора применяются при TTY на stdin и stderr и рабочем `TERM`.
+Moving down out of history restores the original draft and cursor. Ctrl-R starts an explicit search. Enter a query and press Ctrl-R again to go to the previous match. Enter accepts the found line for editing; Escape restores the draft. Ctrl-D ends the session on an empty line and deletes the next character on a nonempty line. Editor settings apply when stdin and stderr are TTYs and `TERM` works.
 
-История лежит в `${XDG_STATE_HOME:-$HOME/.local/state}/nsh/history`. NSH создаёт каталог с правами `0700`, файл с `0600`. Строки с переносами записываются целиком как hex-записи с завершающим переводом строки. Файл обновляется атомарно под блокировкой каталога, чтобы параллельные сеансы читали общую последнюю версию перед записью. Повреждённые и незавершённые записи пропускаются. Хранилище ограничено 32 МиБ. При ошибке чтения или записи текущая сессия сохраняет историю в памяти. `nsh module disable history` отключает и запись, и навигацию.
+History is stored in `${XDG_STATE_HOME:-$HOME/.local/state}/nsh/history`. NSH creates the directory with `0700` permissions and the file with `0600`. Lines containing newlines are written in full as hex records ending in a newline. The file is updated atomically under a directory lock so concurrent sessions read the latest shared version before writing. Corrupt or incomplete records are skipped. Storage is limited to 32 MiB. On a read or write error, the current session keeps history in memory. `nsh module disable history` disables both recording and navigation.
 
-## Модули и hooks
+<a id="модули-и-hooks"></a>
 
-`nsh module list` показывает встроенные и доступные пользовательские модули. `nsh module enable <имя>` активирует модуль. Пользовательский `nsh/modules/<имя>.sh` исполняется при первом явном включении. Порядок загрузки определяется порядком вызовов `enable`. `nsh module disable <имя>` отключает связанные hooks и встроенные визуальные компоненты. Повторное включение успешно загруженного модуля возвращает его hooks без повторного выполнения файла. Объявленные функции, переменные и внешние эффекты уже выполненного кода остаются доступны после отключения. Имена профилей и модулей ограничены 1–64 ASCII-буквами, цифрами, `_` и `-`.
+## Modules and hooks
 
-| Hook | Момент | Аргументы |
+`nsh module list` lists built-in and available user modules. `nsh module enable <name>` activates a module. A user `nsh/modules/<name>.sh` is executed on its first explicit enable. Loading order follows the order of `enable` calls. `nsh module disable <name>` disables associated hooks and built-in visual components. Re-enabling a successfully loaded module restores its hooks without rerunning the file. Functions, variables and external effects already created remain after disabling. Profile and module names are limited to 1–64 ASCII letters, digits, `_` and `-`.
+
+| Hook | When | Arguments |
 |---|---|---|
-| `startup` | После стартовых файлов, перед первой командой | — |
-| `before-prompt` | Перед основным приглашением | — |
-| `pre-command` | После принятия полной команды, перед выполнением | Текст команды |
-| `directory-changed` | После команды, изменившей текущий каталог | Новый путь, прежний путь |
-| `post-command` | После пользовательской команды | Текст команды, код завершения |
-| `exit` | Перед завершением NSH | Код завершения |
+| `startup` | After startup files, before the first command | — |
+| `before-prompt` | Before the primary prompt | — |
+| `pre-command` | After a complete command is accepted, before execution | Command text |
+| `directory-changed` | After a command changes the working directory | New path, previous path |
+| `post-command` | After a user command | Command text, exit status |
+| `exit` | Before NSH exits | Exit status |
 
-`nsh hook add <событие> <функция>` вставляет обработчик в конец списка. `nsh hook remove <событие> <функция>` снимает регистрацию. `nsh hook list` показывает активные обработчики. Обработчик получает аргументы как значения и выполняется в отдельном контексте оболочки. Его переменные, `cd` и выход не меняют родительскую сессию. Обработчики не добавляются в историю, а их статусы не подменяют статус пользовательской команды.
+`nsh hook add <event> <function>` appends a handler. `nsh hook remove <event> <function>` unregisters it. `nsh hook list` lists active handlers. A handler receives arguments as values and runs in a separate shell context. Its variables, `cd` and exit do not change the parent session. Handlers are not added to history, and their statuses do not replace the user command’s status.
 
 ```sh
 on_directory_changed() {
-    printf 'Каталог: %s\n' "$1" >&2
+    printf 'Directory: %s\n' "$1" >&2
 }
 nsh hook add directory-changed on_directory_changed
 ```
 
 
-## Плагины Lua
+<a id="плагины-lua"></a>
 
-`nsh plugin enable NAME` в конфигурации задаёт активный набор текущего сеанса. Плагины загружаются из `${XDG_CONFIG_HOME:-$HOME/.config}/nsh/plugins/` после успешной транзакции. Управляйте сохранённым набором внешним `command nsh plugin enable NAME` или `disable`. Режим `--no-plugins` оставляет доступным редактор NSH и настройки обычного приглашения. Shell-модули `nsh module` и существующие шорткаты работают по прежнему API.
+## Lua plugins
 
-[Установка плагинов](PLUGINS.md) · [Lua API](PLUGIN_API.md)
+`nsh plugin enable NAME` in configuration defines the active set for the current session. Plugins load from `${XDG_CONFIG_HOME:-$HOME/.config}/nsh/plugins/` after a successful transaction. Manage the saved set with external `command nsh plugin enable NAME` or `disable`. `--no-plugins` keeps the NSH editor and normal prompt settings available. Shell modules managed by `nsh module` and existing shortcuts retain their prior API.
+
+[Plugin installation](PLUGINS.md) · [Lua API](PLUGIN_API.md)

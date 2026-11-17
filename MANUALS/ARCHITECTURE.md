@@ -1,21 +1,31 @@
-# Архитектура NSH
+<a id="архитектура-nsh"></a>
 
-## Интерпретатор и редактор
+# NSH architecture
 
-`syntax.rs` разбирает байтовый поток и сохраняет позиции для диагностики конфигурации. `expand.rs` обрабатывает POSIX-подстановки и IFS. `shell.rs` управляет состоянием и исполнением AST, `builtins.rs` — встроенными командами, `jobs.rs` — процессами, сигналами и терминалом. `editor.rs` хранит ввод отдельно от отрисовки. `session.rs` задаёт настройки, профили, историю, shell-модули и hooks. `session_files.rs` читает принадлежащие пользователю файлы XDG с проверкой каталогов и запретом символических ссылок.
+[Русская версия](ARCHITECTURE.ru.md)
 
-Shell-модули управляют реестром параметров и вызывают функции sh через hooks. Управляемая конфигурация применяется транзакционно.
+<a id="интерпретатор-и-редактор"></a>
 
-## Механизм Lua
+## Interpreter and editor
 
-`plugin_lua.rs` связывает Lua 5.4 с Rust через mlua. Плагин владеет своим Lua-состоянием. Регистрации команд, событий и провайдеров принадлежат этому состоянию. Замена плагина готовит новую регистрацию до удаления старой. Приоритет определяет порядок провайдеров. Зависимости загружаются до зависимого плагина.
+`syntax.rs` parses the byte stream and retains positions for configuration diagnostics. `expand.rs` handles POSIX expansions and IFS. `shell.rs` manages shell state and AST execution; `builtins.rs` implements builtins; `jobs.rs` handles processes, signals and the terminal. `editor.rs` keeps input separate from rendering. `session.rs` defines settings, profiles, history, shell modules and hooks. `session_files.rs` reads user-owned XDG files with directory checks and symbolic links prohibited.
 
-`plugins.rs` проверяет манифесты и управляет набором активных Lua-состояний. Сеанс без плагинов хранит пустой указатель на этот набор. Обычный скриптовый режим пропускает обнаружение плагинов. Интерактивный сеанс проверяет сохранённое включение один раз. Команды `conf.sh` готовят изменения вместе с текущей транзакцией.
+Shell modules manage the settings registry and invoke sh functions through hooks. Managed configuration is applied transactionally.
 
-Команда Lua вызывается самой оболочкой. Она получает снимок состояния и накапливает запросы на изменения. NSH проверяет их перед применением. Pipe и перенаправления устанавливаются механизмом оболочки до вызова команды. В дочернем контексте изменения остаются в процессе стадии. Оболочка остаётся однопоточной. Долгий обход каталога вынесен в отдельный ограниченный процесс с неблокирующим чтением.
+<a id="механизм-lua"></a>
 
-`plugin_editor.rs` описывает данные для событий и изменений строки. Редактор применяет байтовые диапазоны к UTF-8 на границах графем. Виртуальный текст, подсветка и меню передаются через общий интерфейс отрисовки. Примеры используют публичный API.
+## Lua integration
 
-## Измерения
+`plugin_lua.rs` connects Lua 5.4 to Rust via mlua. Each plugin owns its Lua state and the commands, events and providers registered in it. Replacing a plugin prepares the new registrations before removing the old ones. Priority determines provider order. Dependencies load before the plugins that depend on them.
 
-Источник обычного shell-скрипта передаёт парсеру полные строки из уже прочитанного буфера. Завершённые команды исполняются по одной, поэтому следующая команда видит изменения алиасов и настроек парсера. Многострочный блок пересматривается при необходимости дочитать следующий буфер. Конфигурация читается построчно для точной диагностики. [Замеры](benchmarks/current.md)
+`plugins.rs` validates manifests and manages the active Lua states. A session without plugins keeps an empty pointer to this set. Normal script mode skips plugin discovery. An interactive session checks the saved enabled selection once. Commands in `conf.sh` prepare changes as part of the current transaction.
+
+The shell invokes Lua commands directly. A command receives a snapshot of the state and accumulates requested changes, which NSH validates before applying. The shell sets up pipes and redirections before invoking the command. In a child context, changes remain in the process for that pipeline stage. The shell remains single-threaded. Long directory scans run in a separate bounded process with nonblocking reads.
+
+`plugin_editor.rs` describes editor events and line changes. The editor applies byte ranges to UTF-8 at grapheme boundaries. Virtual text, highlighting and menus use a common rendering interface. Examples use the public API.
+
+<a id="измерения"></a>
+
+## Measurements
+
+The shell passes full lines from the already-read script buffer to the parser. Complete commands run one at a time, so each subsequent command sees changes to aliases and parser settings. A multiline block is revisited if another buffer is needed. Configuration is read line by line for precise diagnostics. [Measurements](benchmarks/current.md)

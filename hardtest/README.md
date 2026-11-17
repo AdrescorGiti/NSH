@@ -1,10 +1,14 @@
 # NSH HardTest
 
-HardTest запускает конечный набор детерминированных сценариев, а не сертифицирует POSIX и не доказывает отсутствие ошибок или утечек. Нагрузки и их ожидаемые результаты находятся в `workloads.py`; сценарии POSIX, Lua и PTY также используют существующие тесты проекта. `tests/differential.py` сам сравнивает статус, вывод и дерево файлов с зафиксированными ожиданиями, учитывая известные различия эталонов. Отличие одной оболочки не считается автоматически ошибкой NSH.
+[Русская версия](README.ru.md)
 
-## Запуск
+HardTest runs a finite set of deterministic scenarios; it does not certify POSIX conformance or prove the absence of bugs or leaks. Workloads and their expected results are in `workloads.py`; the POSIX, Lua and PTY scenarios also use existing project tests. `tests/differential.py` compares status, output and filesystem state against recorded expectations, accounting for known reference-shell differences. A difference from a single shell is not automatically an NSH bug.
 
-Нужны Linux с Docker, cgroup v2 и Python 3.12+. Запускайте от обычного пользователя, имеющего доступ к Docker, из корня репозитория:
+<a id="запуск"></a>
+
+## Running
+
+Linux with Docker, cgroup v2 and Python 3.12+ is required. Run from the repository root as an ordinary user with Docker access:
 
 ```sh
 docker build -f hardtest/Dockerfile -t nsh-hardtest:local .
@@ -15,20 +19,22 @@ python3 hardtest/runner.py --profile STRESS --output .build/hardtest-stress
 python3 hardtest/runner.py --profile EXTREME --output .build/hardtest-extreme
 ```
 
-В GitHub Actions выберите **Actions → HardTest → Run workflow → EXTREME**. EXTREME доступен только через ручной запуск; PR и push в main запускают QUICK, воскресное расписание — STRESS. Время job ограничено 45 минутами. Отчёты загружаются даже при неуспешных тестах. Параметр `verify_failure_artifact` намеренно завершает ручной запуск ошибкой после тестов для проверки загрузки артефакта. Сам образ собирается из текущего дерева, компилирует NSH и закреплённые версии Dash/Yash; образу для сборки нужен доступ в сеть, но тестовые контейнеры её не получают.
+In GitHub Actions select **Actions → HardTest → Run workflow → EXTREME**. EXTREME is manual-only; pull requests and pushes to main run QUICK, and the Sunday schedule runs STRESS. The job has a 45-minute timeout. Reports are uploaded even if tests fail. The `verify_failure_artifact` input deliberately fails a manual run after testing to verify artifact upload. The image is built from the current tree and compiles NSH and pinned Dash/Yash versions; image building requires network access, but test containers do not get network access.
 
-Каждый сценарий запускается в отдельном контейнере без root, сети, привилегий, capabilities и монтирования исходной рабочей директории; корневая файловая система только для чтения. Ограничения: 512 МиБ памяти без swap, одна квота CPU, 64 процесса на cgroup, временная файловая система 64 МиБ, 2 МиБ на отдельный выходной файл, 512 дескрипторов, 20 секунд CPU на процесс и индивидуальный тайм-аут. `/tmp` допускает исполнение, необходимое для POSIX-тестов; он ограничен по размеру и исчезает вместе с контейнером. Проверка внутри контейнера отказывает в запуске, если cgroup v2 не подтверждает лимиты памяти, CPU и процессов. При тайм-ауте убивается группа процессов и удаляется контейнер со всеми его процессами; workflow дополнительно удаляет оставшиеся контейнеры. Docker daemon сам по себе является привилегированным сервисом: запускайте HardTest только на доверенном, изолированном runner.
+Each scenario runs in its own container without root, networking, privileges, capabilities or a mount of the source working directory; the root filesystem is read-only. Limits: 512 MiB memory without swap, one CPU quota, 64 processes per cgroup, a 64 MiB temporary filesystem, 2 MiB per output file, 512 file descriptors, 20 CPU seconds per process and a per-test timeout. `/tmp` permits execution, as required by the POSIX tests; its size is limited and it disappears with the container. A check inside the container refuses to run unless cgroup v2 confirms the memory, CPU and process limits. On timeout, the process group is killed and the container and all its processes are removed; the workflow also removes leftover containers. The Docker daemon itself is privileged: run HardTest only on a trusted, isolated runner.
 
-`report.json`, `report.md`, `metrics.json` и каталог `failures/` записываются в выбранный каталог. Для каждого сбоя сохраняются сценарий и ограниченные stdout/stderr, сценарий повторяется; повторяющаяся ошибка в последовательности команд дополнительно минимизируется. Воспроизведение: `python3 hardtest/runner.py --case ПУТЬ/К/СЦЕНАРИЮ.json`. Используйте отдельный каталог вывода для каждого запуска, чтобы старые файлы `failures/` не смешивались с новыми. Сценарии фиксированы, случайные seed не используются. Метрика RSS измеряет только ведущий процесс сценария выборками, поэтому может пропустить короткие пики и не включает сумму всех потомков. Монотонный рост при достаточном числе измерений отмечается как подозрение, не как доказанная утечка. OOM и достижение установленного лимита отражаются отдельно и сами по себе не объявляются ошибкой NSH. Ошибки запуска Docker относятся к инфраструктуре.
+`report.json`, `report.md`, `metrics.json` and the `failures/` directory are written to the selected output directory. For each failure the scenario and bounded stdout/stderr are saved and the scenario is retried; a reproducible failure in the repeated-command workload is also minimized. Reproduce with `python3 hardtest/runner.py --case PATH/TO/SCENARIO.json`. Use a separate output directory for each run so old `failures/` files do not mix with new ones. Scenarios are fixed and no random seeds are used. RSS is sampled only for the leading process, so short peaks may be missed and descendant memory is not included. Monotonic growth with enough samples is flagged as suspicious, not as a proven leak. OOM and reaching a configured limit are reported separately and are not in themselves classified as NSH bugs. Docker launch failures are infrastructure failures.
 
-## Экспериментальный HardTest Score
+<a id="экспериментальный-hardtest-score"></a>
 
-Значение зависит от профиля, доступных ресурсов, ОС и текущего набора тестов. Это не рейтинг для сравнения компьютеров. Время выполнения не участвует в баллах. Каждая доля ниже — доля прошедших сценариев; недоступная категория получает 0. Итог округляется до целого:
+## Experimental HardTest Score
 
-- корректность: 3000 × средняя доля категорий parser, execution, posix, recovery;
-- стабильность: 2500 × доля всех прошедших сценариев;
-- память: 1500 × доля прошедших memory-сценариев;
-- нагрузочная производительность: 1500 × `min(максимальная успешно пройденная нагрузка / 100000, 1)`; это мера пройденного размера, не скорости;
-- Lua и интерактивность: 1500 × средняя доля категорий lua и signals.
+The score depends on the profile, available resources, OS and current test suite. It is not a ranking for comparing computers. Elapsed time is not included. Each fraction below is the fraction of scenarios passed; an unavailable category scores 0. The final result is rounded to an integer:
 
-Если обнаружен crash, timeout, неверный статус/вывод, неожиданный stderr или ошибка инфраструктуры, итог ограничивается 3000. Таким образом, большая пройденная нагрузка не перекрывает критический сбой. Повторяемость предполагает одинаковые версии, ограничения и результаты, включая отсутствие случайных тайм-аутов runner.
+- Correctness: 3000 × the average pass fraction of parser, execution, posix and recovery categories.
+- Stability: 2500 × the fraction of all scenarios passed.
+- Memory: 1500 × the fraction of memory scenarios passed.
+- Load capacity: 1500 × `min(maximum successful workload / 100000, 1)`; this measures completed workload size, not speed.
+- Lua and interactivity: 1500 × the average pass fraction of lua and signals categories.
+
+If a crash, timeout, wrong status/output, unexpected stderr or infrastructure failure is detected, the total is capped at 3000. A high completed workload cannot offset a critical failure. Repeatability assumes the same versions, limits and results, including no incidental runner timeouts.

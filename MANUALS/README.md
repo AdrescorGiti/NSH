@@ -1,12 +1,16 @@
-# Руководства NSH
+<a id="руководства-nsh"></a>
 
-| Задача | Руководство |
+# NSH guides
+
+[Русская версия](README.ru.md)
+
+| Task | Guide |
 |---|---|
-| Запускать скрипты, настроить приглашение, профили, историю и клавиши | [Использование](USAGE.md), [настройки](CONFIG.md) |
-| Подключить, отключить или восстановить плагины | [Управление плагинами](PLUGINS.md) |
-| Написать Lua-плагин, команду, тему или провайдер редактора | [Туториал и Lua API](PLUGIN_API.md) |
-| Настроить готовые подсказки, подсветку и цветную тему | [File Suggestions](FILE_SUGGESTIONS.md), [Syntax Colors](SYNTAX_COLORS.md), [Aurora Theme](AURORA_THEME.md) |
-| Проверить метрики или сравнить сборки на своей машине | [Бенчмарки](BENCHMARKS.md), [методика профилирования](PERFORMANCE.md) |
-| Собрать или установить DEB, RPM или Arch-пакет | [Пакеты NSH](PACKAGE.md), [login shell](LOGIN.md) |
-| Проверить синтаксис POSIX, архитектуру и зависимости | [POSIX](POSIX.md), [архитектура](ARCHITECTURE.md), [зависимости](DEPENDENCIES.md), [проверка сборки](IMPLEMENTATION.md) |
-| Открыть справку в терминале | `man nsh` или [исходник man-страницы](nsh.1) |
+| Run scripts; configure prompts, profiles, history and key bindings | [Usage](USAGE.md), [configuration](CONFIG.md) |
+| Enable, disable or recover plugins | [Plugin management](PLUGINS.md) |
+| Write a Lua plugin, command, theme or editor provider | [Tutorial and Lua API](PLUGIN_API.md) |
+| Configure the supplied suggestions, highlighting and color theme | [File Suggestions](FILE_SUGGESTIONS.md), [Syntax Colors](SYNTAX_COLORS.md), [Aurora Theme](AURORA_THEME.md) |
+| Check metrics or compare builds on your machine | [Benchmarks](BENCHMARKS.md), [profiling methodology](PERFORMANCE.md) |
+| Build or install DEB, RPM or Arch packages | [NSH packages](PACKAGE.md), [login shell](LOGIN.md) |
+| Review POSIX syntax, architecture and dependencies | [POSIX](POSIX.md), [architecture](ARCHITECTURE.md), [dependencies](DEPENDENCIES.md), [build verification](IMPLEMENTATION.md) |
+| Open terminal documentation | `man nsh` or the [man-page source](nsh.1) |

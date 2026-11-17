@@ -1,5 +1,7 @@
 # File suggestions
 
+[Русская версия](FILE_SUGGESTIONS.ru.md)
+
 Copy [the file-suggestions example](../examples/plugins/file-suggestions/) into the NSH configuration directory's `plugins/`
 directory. Enable it with `nsh plugin enable file-suggestions`.
 
@@ -16,7 +18,7 @@ temporarily be unavailable. There is no suggestion scan without this plugin.
 
 In NSH 0.2.1+, add these options to your installed copy of `plugin.toml` to
 style the ghost text. Run `nsh plugin reload file-suggestions` in NSH after
-saving. See the [style API](PLUGIN_API.md#стили-редактора) for the valid fields.
+saving. See the [style API](PLUGIN_API.md#editor-styles) for the valid fields.
 
 ~~~toml
 [options.ghost]

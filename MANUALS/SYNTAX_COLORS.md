@@ -1,5 +1,7 @@
 # Syntax colors
 
+[Русская версия](SYNTAX_COLORS.ru.md)
+
 Copy [the syntax-colors example](../examples/plugins/syntax-colors/) into the NSH configuration directory's `plugins/`
 directory. Enable it with `nsh plugin enable syntax-colors`.
 

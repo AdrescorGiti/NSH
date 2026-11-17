@@ -1,4 +1,8 @@
-# Проверка сборки
+<a id="проверка-сборки"></a>
+
+# Build verification
+
+[Русская версия](IMPLEMENTATION.ru.md)
 
 ~~~sh
 cargo fmt --check
@@ -10,6 +14,6 @@ python3 tests/jobs_pty.py target/release/nsh
 python3 tests/plugin_pty.py target/release/nsh
 ~~~
 
-`tests/core.py` проверяет запуск скриптов и встроенные команды. PTY-тесты проверяют приглашение, клавиатуру, плагины, сигналы и управление заданиями. `tests/differential.py` прогоняет набор POSIX-сценариев, а `tools/test-native` проверяет исполнение без сторонней shell.
+`tests/core.py` checks script execution and builtins. PTY tests check the prompt, keyboard input, plugins, signals and job control. `tests/differential.py` runs POSIX scenarios, while `tools/test-native` checks execution without an external shell.
 
-Полные проверки сборки и установки перечислены в [руководстве по пакетам](PACKAGE.md). Для измерений используйте [бенчмарки](BENCHMARKS.md).
+Full build and installation checks are listed in the [package guide](PACKAGE.md). For measurements, use the [benchmarks](BENCHMARKS.md).

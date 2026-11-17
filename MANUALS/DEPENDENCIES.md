@@ -1,13 +1,17 @@
-# Зависимости и лицензии
+<a id="зависимости-и-лицензии"></a>
 
-NSH распространяется по MIT. Минимальная заявленная версия Rust — 1.85. Целевые проверки выполнены для Linux x86_64.
+# Dependencies and licenses
 
-| Rust-библиотека | Зафиксированная версия | Лицензия | Назначение |
+[Русская версия](DEPENDENCIES.ru.md)
+
+NSH is distributed under the MIT license. The minimum declared Rust version is 1.85. Targeted checks have been performed on Linux x86_64.
+
+| Rust library | Locked version | License | Purpose |
 |---|---:|---|---|
-| libc | 0.2.191 | MIT OR Apache-2.0 | Системные вызовы, ABI POSIX, процессы, файлы и терминал |
-| unicode-segmentation | 1.12.0 | MIT OR Apache-2.0 | Границы графем терминального ввода |
-| unicode-width | 0.2.3 | MIT OR Apache-2.0 | Ширина графем и текста в колонках |
+| libc | 0.2.191 | MIT OR Apache-2.0 | System calls, POSIX ABI, processes, files and terminal |
+| unicode-segmentation | 1.12.0 | MIT OR Apache-2.0 | Grapheme boundaries for terminal input |
+| unicode-width | 0.2.3 | MIT OR Apache-2.0 | Grapheme and text width in columns |
 
-Контрольные суммы crates.io указаны в Cargo.lock. Сборки DEB и RPM требуют glibc от 2.17 и системную библиотеку поддержки GCC. Для смены login shell используются установленный менеджер пакетов и `chsh`. Git нужен для модуля приглашения, внешний редактор используется командой `fc`.
+Crates.io checksums are recorded in Cargo.lock. DEB and RPM builds require glibc 2.17 or later and the GCC runtime library. Changing the login shell uses the installed package manager and `chsh`. Git is needed for the prompt module, and the `fc` command uses an external editor.
 
-NSH использует mlua 0.11.6 (MIT) с Lua 5.4.8 (MIT). Манифесты плагинов обрабатываются через serde 1.0.229, toml 0.9.8 и semver 1.0.28 (MIT OR Apache-2.0). Lua собирается из Cargo-зависимости lua-src и входит в бинарник. Минимальный Rust для mlua 0.11.6 — 1.85. Контрольные суммы находятся в Cargo.lock. В пакете уведомления о лицензиях устанавливаются в `/usr/share/licenses/nsh/THIRD-PARTY.txt`. [Лицензии зависимостей](https://github.com/AdrescorGiti/NSH/blob/main/docs/licenses/THIRD-PARTY.txt)
+NSH uses mlua 0.11.6 (MIT) with Lua 5.4.8 (MIT). Plugin manifests are processed using serde 1.0.229, toml 0.9.8 and semver 1.0.28 (MIT OR Apache-2.0). Lua is built from the lua-src Cargo dependency and included in the binary. The minimum Rust version for mlua 0.11.6 is 1.85. Checksums are in Cargo.lock. The package installs license notices to `/usr/share/licenses/nsh/THIRD-PARTY.txt`. [Dependency licenses](https://github.com/AdrescorGiti/NSH/blob/main/docs/licenses/THIRD-PARTY.txt)

@@ -1,40 +1,49 @@
 # NSH — Neo SH
 
-<img width="1040" height="300" alt="NSH-github-banner" src="https://github.com/user-attachments/assets/16640a8d-6fb8-4707-a912-ab16ac3b57c6" />
+[Русская версия](README.ru.md)
 
+<img width="1040" height="300" alt="NSH GitHub banner" src="https://github.com/user-attachments/assets/16640a8d-6fb8-4707-a912-ab16ac3b57c6" />
 
 **Just Vanilla SH.**
 
-NSH — оболочка для Linux со своим интерпретатором на Rust. Обычные скрипты выполняются в POSIX-ориентированном режиме. В интерактивном сеансе Lua-плагины могут добавлять команды, менять приглашение и подсвечивать ввод. Поддерживаемый синтаксис перечислен в [справочнике POSIX](MANUALS/POSIX.md).
+NSH is a Linux shell with its own interpreter written in Rust. Ordinary scripts run in a POSIX-oriented mode. In an interactive session, Lua plugins can add commands, change the prompt, and highlight input. Supported syntax is documented in the [POSIX guide](MANUALS/POSIX.md).
 
-## Установка
+![NSH demo showing the shell and a custom mfs plugin](assets/nsh-demo.gif)
 
-Выберите пакет для своей системы и скачайте файл контрольных сумм `SHA256SUMS`. [Текущий релиз](https://github.com/AdrescorGiti/NSH/releases/latest)
+The demo includes `mfs`, a personal plugin command; it is not included in NSH by default.
 
-| Дистрибутивы | Пакет | Установка |
+<a id="установка"></a>
+
+## Installation
+
+Choose the package for your system and download the `SHA256SUMS` file. [Latest release](https://github.com/AdrescorGiti/NSH/releases/latest)
+
+| Distributions | Package | Installation |
 |---|---|---|
 | Arch Linux, CachyOS | `.pkg.tar.zst` | `sudo pacman -U -- ./nsh-0.2.1-2-x86_64.pkg.tar.zst` |
-| Debian, Ubuntu и совместимые системы | `.deb` | `sudo apt install ./nsh_0.2.1-1_amd64.deb` |
-| Fedora, RHEL-совместимые системы, ROSA | `.rpm` | `sudo dnf install ./nsh-0.2.1-1.x86_64.rpm` |
+| Debian, Ubuntu and derivatives | `.deb` | `sudo apt install ./nsh_0.2.1-1_amd64.deb` |
+| Fedora, RHEL-compatible systems, ROSA | `.rpm` | `sudo dnf install ./nsh-0.2.1-1.x86_64.rpm` |
 
-Перед установкой проверьте файл в каталоге загрузки.
+Verify the file in the download directory before installing:
 
 ~~~sh
 sha256sum --ignore-missing -c SHA256SUMS
 ~~~
 
-DEB и RPM используют один бинарник для x86-64-v1 с glibc от 2.17. Установка проверена на Debian, Ubuntu, Fedora, Red Hat UBI и ROSA Fresh. [Версии, зависимости и сборка пакетов](MANUALS/PACKAGE.md#debian-и-rpm-дистрибутивы)
+The DEB and RPM packages use the same x86-64-v1 binary, compatible with glibc 2.17 and later. Installation has been tested on Debian, Ubuntu, Fedora, Red Hat UBI and ROSA Fresh. See [versions, dependencies and package builds](MANUALS/PACKAGE.md#debian-and-rpm-distributions).
 
-Для сборки из исходников нужны Linux, Rust 1.85+ и системный C-компилятор.
+Building from source requires Linux, Rust 1.85+ and a system C compiler:
 
 ~~~sh
 cargo build --locked --release
 target/release/nsh --vanilla -c 'printf "<%s>\n" "$@"' example one 'two words'
 ~~~
 
-Запустите `nsh` после установки. Пакет сохраняет текущую login shell. Для режима POSIX используйте `nsh --posix`, для запуска без стартовых файлов — `nsh --vanilla`, для проверки с отключёнными Lua-плагинами — `nsh --no-plugins`.
+Run `nsh` after installation. Installing the package leaves your current login shell unchanged. Use `nsh --posix` for POSIX mode, `nsh --vanilla` to start without startup files, or `nsh --no-plugins` to start with Lua plugins disabled.
 
-## Плагины
+<a id="плагины"></a>
+
+## Plugins
 
 ~~~lua
 nsh.command.register("hello", function(args)
@@ -43,22 +52,28 @@ nsh.command.register("hello", function(args)
 end)
 ~~~
 
-В [готовых примерах](examples/plugins/) есть подсветка, подсказки путей с принятием по Right Arrow и [Aurora Theme](MANUALS/AURORA_THEME.md) с настраиваемыми цветами и меню на Lua. Смотри [установку плагинов](MANUALS/PLUGINS.md), [туториал и Lua API](MANUALS/PLUGIN_API.md) и [настройки сеанса](MANUALS/CONFIG.md).
+The [included examples](examples/plugins/) provide syntax highlighting, path suggestions accepted with the Right Arrow key, and [Aurora Theme](MANUALS/AURORA_THEME.md), with configurable colors and a Lua menu. See [plugin installation](MANUALS/PLUGINS.md), the [Lua API tutorial](MANUALS/PLUGIN_API.md), and [session configuration](MANUALS/CONFIG.md).
 
-## Преимущества NSH
+<a id="преимущества-nsh"></a>
 
-- **Скрипты и интерактивность в одной оболочке.** Собственный POSIX-ориентированный интерпретатор на Rust выполняет скрипты без загрузки Lua.
-- **Lua меняет сам сеанс.** Плагины регистрируют команды, меняют текущий каталог и переменные, оформляют приглашение и добавляют меню, подсветку и подсказки. Команды Lua работают в процессе NSH и поддерживают перенаправления и пайплайны.
-- **Исправимая конфигурация.** `nsh config check` проверяет синтаксис, ошибка при загрузке откатывает управляемые настройки профиля, а `nsh --no-plugins` позволяет запустить сеанс с отключёнными плагинами.
+## Why NSH?
 
-## Бенчмарки пяти оболочек
+- **Scripts and interactivity in one shell.** The Rust interpreter runs POSIX-oriented scripts without initializing Lua.
+- **Lua can change the session.** Plugins can register commands, change the working directory and variables, customize the prompt, and add menus, highlighting and suggestions. Lua commands run in the NSH process and support redirections and pipelines.
+- **Recoverable configuration.** `nsh config check` checks syntax, a loading error rolls back managed profile settings, and `nsh --no-plugins` starts a session with plugins disabled.
 
-![Сравнение NSH, Dash, Zsh, Fish и Bash. Медианы времени выполнения в миллисекундах](benchmarks/shells.svg)
+<a id="бенчмарки-пяти-оболочек"></a>
 
-В 6 из 9 сценариев NSH заняла второе место по медиане. На 1600 вызовах функций NSH показала 4,11 мс, более чем вдвое быстрее Bash, Zsh и Fish в этом сценарии. Наименьшие медианы во всех девяти сценариях показал Dash.
+## Benchmarks across five shells
 
-[Версии, разброс и сырые замеры](MANUALS/benchmarks/current.md) · [Как повторить замеры](MANUALS/BENCHMARKS.md)
+![Comparison of NSH, Dash, Zsh, Fish and Bash: median execution time in milliseconds](benchmarks/shells.svg)
 
-## Документация
+In this recorded run, NSH ranked second by median in 6 of 9 workloads. For 1,600 function calls, NSH took 4.11 ms, less than half the measured time of Bash, Zsh and Fish in that workload. Dash had the lowest median in all nine workloads. These results describe the recorded environment and workloads, not every system.
 
-[Все руководства (MANUALS)](MANUALS/) · [GitHub Wiki](https://github.com/AdrescorGiti/NSH/wiki) · [Текущий выпуск](CHANGELOG.md) · [Лицензия MIT](LICENSE)
+[Versions, variation and raw measurements](MANUALS/benchmarks/current.md) · [How to reproduce the benchmarks](MANUALS/BENCHMARKS.md)
+
+<a id="документация"></a>
+
+## Documentation
+
+[All guides](MANUALS/) · [GitHub Wiki](https://github.com/AdrescorGiti/NSH/wiki) · [Current release](CHANGELOG.md) · [MIT license](LICENSE)

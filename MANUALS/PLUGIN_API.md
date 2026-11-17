@@ -1,10 +1,14 @@
 # Lua API 1
 
-NSH встраивает Lua 5.4 через mlua. API выбирается целым полем `api_version = 1` в манифесте. Для несовместимого изменения увеличивается номер API. Новые возможности 0.2.1 используют тот же API. Чтобы плагин с новыми вызовами загружался только подходящей оболочкой, укажите `nsh_version = ">=0.2.1, <0.3.0"`. Версии доступны как `nsh.version` и `nsh.api_version`. [mlua](https://docs.rs/mlua/0.11.6/mlua/)
+[Русская версия](PLUGIN_API.ru.md)
 
-## Команды
+NSH embeds Lua 5.4 through mlua. The API is selected by the integer field `api_version = 1` in the manifest; incompatible changes increment the API number. The new features in 0.2.1 use the same API. To load a plugin using new calls only in a compatible shell, specify `nsh_version = ">=0.2.1, <0.3.0"`. Versions are available as `nsh.version` and `nsh.api_version`. [mlua](https://docs.rs/mlua/0.11.6/mlua/)
 
-Создайте каталог `~/.config/nsh/plugins/example/` и поместите в него `plugin.toml`.
+<a id="команды"></a>
+
+## Commands
+
+Create `~/.config/nsh/plugins/example/` and put `plugin.toml` in it.
 
 ```toml
 name = "example"
@@ -16,7 +20,7 @@ author = "Local user"
 capabilities = ["shell-state"]
 ```
 
-В том же каталоге создайте `init.lua`.
+Create `init.lua` in the same directory.
 
 ```lua
 nsh.command.register("hello", function(args)
@@ -32,39 +36,41 @@ nsh.command.register("cdev", function(args)
 end)
 ```
 
-Добавьте `nsh plugin enable example` в `conf.sh` или вызовите эту команду в работающем NSH. Обработчик получает массив аргументов с индексом 1 после shell-подстановок и без имени команды. Строки аргументов и переменных сохраняют байты. `nil` возвращает статус 0. Числовой статус приводится к диапазону 0–255. Изменения состояния выполненной команды видны оболочке. В стадии пайплайна они остаются в её дочернем контексте.
+Add `nsh plugin enable example` to `conf.sh`, or run it in an active NSH session. The handler receives a 1-indexed array of arguments after shell expansion, without the command name. Argument and variable strings preserve bytes. `nil` returns status 0. A numeric status is converted to the 0–255 range. State changes made by an executed command are visible to the shell; in a pipeline stage they remain in its child context.
 
-| Метод | Действие |
+| Method | Action |
 |---|---|
-| `nsh.command.register(name, fn)` | Регистрирует новую команду при загрузке. |
-| `nsh.command.replace(name, fn)` | Требует `override`. Регистрирует замену команды. Для специальной POSIX builtin дополнительно действует политика разрешений оболочки. |
-| `nsh.command.wrap(name, fn)` | Требует `override`. После оригинала вызывает `fn(args, status)`. При `nil` сохраняет исходный статус. |
-| `nsh.command.unregister(name)` | Удаляет свою команду и возвращает наличие регистрации. |
-| `nsh.command.exists(name)` | Проверяет текущие команды, встроенные имена и поиск через PATH. Кэш подсветки учитывает каталог, PATH и срок 2 секунды. |
-| `nsh.print(...)` | Пишет простые значения в stdout через табуляцию и перевод строки. |
-| `nsh.stdout.write(...)`, `nsh.stderr.write(...)` | Записывают байтовые строки напрямую. Требуют `stdio`. |
-| `nsh.stdin.read_line()` | Читает строку без завершающего LF, до 64 КиБ. Возвращает `nil` на EOF. Требует `stdio`. |
-| `nsh.stdin.read(max_bytes)` | Читает до `max_bytes` байт за один вызов. Диапазон от 1 до 65536. Сохраняет NUL, переводы строк и произвольные байты. Возможен короткий блок. Возвращает `nil` на EOF. Требует `stdio`. |
-| `nsh.shell.get(name)`, `nsh.env.get(name)` | Читают shell-переменную или экспортированное окружение. |
-| `nsh.shell.set(name, value)`, `nsh.env.set(name, value)` | Изменяют shell-переменную или экспортируемую переменную. `nil` удаляет значение. Требуют `shell-state`. |
-| `nsh.shell.cwd()`, `nsh.shell.status()` | Текущий каталог и предыдущий статус оболочки. |
-| `nsh.shell.cd(path)` | Ставит смену каталога в очередь и обновляет снимок для текущего обработчика. Требует `shell-state`. |
-| `nsh.process.run(program, args)` | Выполняет внешний ELF или файл с shebang с унаследованными перенаправлениями. Возвращает статус. Требует `process`. Для текстового скрипта без shebang укажите NSH как программу и передайте путь к скрипту аргументом. |
-| `nsh.process.exec(program, args)` | Последний эффект обработчика. Требует `exec`. Заменяет текущий процесс. После перехода в Bash Lua-движок и плагины NSH завершают участие в сеансе. |
+| `nsh.command.register(name, fn)` | Registers a new command at load time. |
+| `nsh.command.replace(name, fn)` | Requires `override`. Registers a command replacement. Special POSIX builtins are also subject to the shell permission policy. |
+| `nsh.command.wrap(name, fn)` | Requires `override`. Calls `fn(args, status)` after the original; `nil` preserves the original status. |
+| `nsh.command.unregister(name)` | Removes the plugin’s own command and returns whether it was registered. |
+| `nsh.command.exists(name)` | Checks current commands, builtins and PATH lookup. The highlighting cache considers directory, PATH and a two-second lifetime. |
+| `nsh.print(...)` | Writes simple values to stdout separated by tabs and followed by a newline. |
+| `nsh.stdout.write(...)`, `nsh.stderr.write(...)` | Write byte strings directly. Require `stdio`. |
+| `nsh.stdin.read_line()` | Reads a line without the trailing LF, up to 64 KiB. Returns `nil` at EOF. Requires `stdio`. |
+| `nsh.stdin.read(max_bytes)` | Reads up to `max_bytes` bytes in one call, range 1 to 65536. Preserves NUL, newlines and arbitrary bytes; a short read is possible. Returns `nil` at EOF. Requires `stdio`. |
+| `nsh.shell.get(name)`, `nsh.env.get(name)` | Read a shell variable or exported environment variable. |
+| `nsh.shell.set(name, value)`, `nsh.env.set(name, value)` | Change a shell or exported variable. `nil` removes the value. Require `shell-state`. |
+| `nsh.shell.cwd()`, `nsh.shell.status()` | Current directory and previous shell status. |
+| `nsh.shell.cd(path)` | Queues a directory change and updates the snapshot for the current handler. Requires `shell-state`. |
+| `nsh.process.run(program, args)` | Executes an external ELF or a file with a shebang using inherited redirections; returns its status. Requires `process`. For a text script without a shebang, specify NSH as the program and pass the script path as an argument. |
+| `nsh.process.exec(program, args)` | The handler’s final effect. Requires `exec`. Replaces the current process. After a transition to Bash, the Lua engine and NSH plugins no longer participate in the session. |
 
-`nsh.process.run` выполняется синхронно. Дочерний процесс использует текущую группу процессов. Чтобы создать отдельное интерактивное задание, вызывайте внешнюю команду через обычный синтаксис NSH. Явный `nsh.process.exec` выполняется после проверки эффектов команды, вне загрузки пользовательской конфигурации.
+`nsh.process.run` is synchronous. The child uses the current process group. To create a separate interactive job, invoke an external command through normal NSH syntax. Explicit `nsh.process.exec` runs after command effects have been checked, outside user configuration loading.
 
-## Настройки и файлы плагина
+<a id="настройки-и-файлы-плагина"></a>
 
-Добавьте в `plugin.toml` настройки, которые пользователь сможет менять перед `nsh plugin reload NAME`.
+## Plugin settings and files
+
+Add options to `plugin.toml` that users can change before `nsh plugin reload NAME`.
 
 ~~~toml
 [options]
-greeting = "Привет"
+greeting = "Hello"
 targets = ["NSH", "Lua"]
 ~~~
 
-Создайте файл `lib/messages.lua` в каталоге своего плагина.
+Create `lib/messages.lua` inside your plugin directory.
 
 ~~~lua
 local messages = {}
@@ -76,7 +82,7 @@ end
 return messages
 ~~~
 
-Подключите его в `init.lua` и замените предыдущий обработчик `hello`.
+Load it in `init.lua` and replace the previous `hello` handler.
 
 ~~~lua
 local messages = nsh.require("lib.messages")
@@ -88,39 +94,43 @@ nsh.command.register("hello", function(args)
 end)
 ~~~
 
-`nsh.config.get()` возвращает копию `[options]`. Вызов с ключом верхнего уровня возвращает отдельное значение, с ключом и вторым аргументом — значение по умолчанию для отсутствующего ключа. TOML-массивы получают индексы с 1, даты возвращаются строками. Изменение полученной таблицы действует только в Lua.
+`nsh.config.get()` returns a copy of `[options]`. A call with a top-level key returns that value; with a key and second argument it returns the default for a missing key. TOML arrays are indexed from 1, and dates are returned as strings. Changing the returned table affects only Lua.
 
-`nsh.require("lib.messages")` читает `lib/messages.lua` внутри текущего плагина. Допускается доверенный исходный Lua-код в обычных файлах. Имя ограничено 128 байтами и состоит из разделённых точками частей с ASCII-буквами, цифрами, `_` и `-`. Lua кэширует возвращённое значение для текущей загрузки. Модуль с `return nil` или без `return` возвращает `true`. Первые импорты, в том числе вложенные, выполняются при инициализации плагина. В обработчиках доступны уже загруженные модули. При reload NSH создаёт новый Lua-кэш. В одном плагине можно загрузить до 64 модулей размером до 1 МиБ каждый.
+`nsh.require("lib.messages")` reads `lib/messages.lua` within the current plugin. Trusted Lua source in regular files is permitted. The name is limited to 128 bytes and consists of dot-separated parts containing ASCII letters, digits, `_` and `-`. Lua caches the returned value for the current load. A module with `return nil` or no `return` returns `true`. First imports, including nested imports, run during plugin initialization. Already loaded modules are available to handlers. On reload NSH creates a new Lua cache. A plugin can load up to 64 modules of up to 1 MiB each.
 
-## Жизненный цикл
+<a id="жизненный-цикл"></a>
 
-`nsh.on(event, fn)` и `nsh.events.on(event, fn)` регистрируют одно событие. `fn(args)` принимает массив строк. Доступные имена включают `load`, `enable`, `disable`, `reload`, `unload`, `error`, `shutdown`, `startup`, `before-prompt`, `pre-command`, `before-dispatch`, `after-dispatch`, `post-command`, `directory-changed` и `exit`.
+## Lifecycle
 
-Команды, события и провайдеры регистрируются в верхнеуровневом `init.lua`. Данные текущего сеанса доступны в обработчиках. Верхнеуровневый код при инициализации читает унаследованное окружение процесса. Для Lua действует ограничение памяти 8 МиБ на VM и бюджет инструкций. Предлагаемые изменения состояния собираются во время успешного вызова. Вывод и явно запущенные процессы являются непосредственными побочными эффектами.
+`nsh.on(event, fn)` and `nsh.events.on(event, fn)` register one event. `fn(args)` receives an array of strings. Available names include `load`, `enable`, `disable`, `reload`, `unload`, `error`, `shutdown`, `startup`, `before-prompt`, `pre-command`, `before-dispatch`, `after-dispatch`, `post-command`, `directory-changed` and `exit`.
 
-## Редактор, меню и история
+Commands, events and providers are registered in top-level `init.lua`. Current session data is available to handlers. Top-level initialization code reads the inherited process environment. Lua has an 8 MiB memory limit per VM and an instruction budget. Proposed state changes are collected during a successful call. Output and explicitly launched processes are immediate side effects.
 
-Редактор предоставляет строку UTF-8 и **нулевой байтовый индекс** курсора. Позиции замены и курсора должны совпадать с границами графем. Например, для строки `λ` позиции 0 и 2 допустимы.
+<a id="редактор-меню-и-история"></a>
 
-| Метод | Действие |
+## Editor, menus and history
+
+The editor provides a UTF-8 string and a **zero-based byte offset** for the cursor. Replacement and cursor positions must lie on grapheme boundaries. For example, positions 0 and 2 are valid for `λ`.
+
+| Method | Action |
 |---|---|
-| `nsh.editor.on_change(fn)` | Вызывает `fn(line, cursor)` на изменениях ввода. |
-| `nsh.editor.on_tick(fn)` | Вызывает `fn(line, cursor)` во время фонового запроса редактора. При отсутствии своего tick вызывается обработчик изменений. |
-| `nsh.editor.line()`, `nsh.editor.cursor()` | Возвращают состояние текущего кадра. |
-| `nsh.editor.set_line(line[, cursor])` | Заменяет всю строку. По умолчанию курсор ставится в её конец. |
-| `nsh.editor.replace(start, end, text)`, `nsh.editor.set_cursor(offset)` | Меняют текст или положение курсора. `end` — исключительная позиция. |
-| `nsh.editor.set_ghost_text(text[, style])` | Рисует подсказку. `nil` очищает её. Принятие подсказки требует явной операции замены. |
-| `nsh.editor.set_virtual_text(items)` | Принимает элементы `{offset, text, style}`. Поле `color` сохраняет поддержку HEX. |
-| `nsh.editor.set_highlights(items)` | Принимает диапазоны `{start, ["end"], style}`. Поле `color` сохраняет поддержку HEX. |
-| `nsh.editor.set_menu(items[, options])` | Показывает список строк или `{text, style}`. Передайте `nil`, чтобы скрыть меню. |
-| `nsh.keys.bind(key, fn)`, `nsh.keys.wrap(key, fn)` | Вызывают `fn(key, default_action)`. `true` обрабатывает клавишу, `nil` или `false` оставляет стандартное действие. |
-| `nsh.prompt.register(fn)` | `fn(default_prompt, status)` возвращает строку, список `{text, style}` или `nil`. |
-| `nsh.highlight.register(fn)` | `fn(line, cursor)` возвращает таблицу диапазонов подсветки или `nil`. |
-| `nsh.completion.register(fn)` | `fn(line, cursor)` при Tab возвращает пункты меню, таблицу `{items, selected, style, selected_style}` или `nil`. |
-| `nsh.history.entries()`, `nsh.history.register(fn)` | Читает историю. Провайдер `fn(default_entries)` возвращает до 512 записей общим объёмом до 8 МиБ или `nil`. |
-| `nsh.fs.read_dir(path, prefix?)`, `nsh.fs.request(path, prefix?)` | Асинхронный снимок каталога. Возвращает массив `{name, is_dir}`, `nil` пока ожидается чтение или `nil, error`. Требует `fs`. |
+| `nsh.editor.on_change(fn)` | Calls `fn(line, cursor)` on input changes. |
+| `nsh.editor.on_tick(fn)` | Calls `fn(line, cursor)` during a background editor request. Without a tick handler, the change handler is called. |
+| `nsh.editor.line()`, `nsh.editor.cursor()` | Return the current frame state. |
+| `nsh.editor.set_line(line[, cursor])` | Replaces the entire line; by default the cursor moves to its end. |
+| `nsh.editor.replace(start, end, text)`, `nsh.editor.set_cursor(offset)` | Change text or cursor position. `end` is exclusive. |
+| `nsh.editor.set_ghost_text(text[, style])` | Draws a suggestion. `nil` clears it. Accepting a suggestion requires an explicit replacement. |
+| `nsh.editor.set_virtual_text(items)` | Accepts `{offset, text, style}` items. The `color` field retains HEX support. |
+| `nsh.editor.set_highlights(items)` | Accepts `{start, ["end"], style}` ranges. The `color` field retains HEX support. |
+| `nsh.editor.set_menu(items[, options])` | Shows a list of strings or `{text, style}` items. Pass `nil` to hide the menu. |
+| `nsh.keys.bind(key, fn)`, `nsh.keys.wrap(key, fn)` | Call `fn(key, default_action)`. `true` handles the key; `nil` or `false` keeps the default action. |
+| `nsh.prompt.register(fn)` | `fn(default_prompt, status)` returns a string, list of `{text, style}` items or `nil`. |
+| `nsh.highlight.register(fn)` | `fn(line, cursor)` returns a table of highlight ranges or `nil`. |
+| `nsh.completion.register(fn)` | On Tab, `fn(line, cursor)` returns menu items, an `{items, selected, style, selected_style}` table or `nil`. |
+| `nsh.history.entries()`, `nsh.history.register(fn)` | Read history. The `fn(default_entries)` provider returns up to 512 entries totaling up to 8 MiB, or `nil`. |
+| `nsh.fs.read_dir(path, prefix?)`, `nsh.fs.request(path, prefix?)` | Asynchronous directory snapshot. Returns an array of `{name, is_dir}`, `nil` while a read is pending, or `nil, error`. Requires `fs`. |
 
-Пример вставляет видимый суффикс только после Right Arrow.
+The example inserts the visible suffix only after Right Arrow.
 
 ```lua
 local ghost
@@ -152,13 +162,15 @@ nsh.highlight.register(function(line)
 end)
 ```
 
-Полные примеры Lua находятся в `examples/plugins/`, включая поиск реальных файлов. Провайдеры редактора имеют доступ к снимку оболочки для чтения. Запуск синхронной команды и чтение stdin доступны из обычного обработчика команды или события, чтобы ввод редактора не блокировался.
+Complete Lua examples are in `examples/plugins/`, including actual file lookup. Editor providers have read access to the shell snapshot. Synchronous command execution and stdin reads are available from ordinary command or event handlers so editor input is not blocked.
 
-## Стили редактора
+<a id="стили-редактора"></a>
 
-В `style` можно передать цвет переднего плана `"#RRGGBB"`, имя стиля, встроенный `"dim"` или таблицу с `fg`, `bg` и логическими полями `bold`, `dim`, `italic`, `underline`, `inverse`. В диапазонах подсветки и виртуального текста `style` имеет приоритет над `color`.
+## Editor styles
 
-`nsh.style.define(name, style)` сохраняет или заменяет стиль в палитре текущего плагина. `nsh.style.defined(name)` проверяет имя в палитре, `nsh.style.remove(name)` удаляет его и сообщает, было ли оно задано. Имя допускает до 64 ASCII-букв, цифр и символов `-_.`. Палитра хранит до 512 имён.
+For `style`, pass a foreground color `"#RRGGBB"`, a style name, the built-in `"dim"`, or a table containing `fg`, `bg` and boolean fields `bold`, `dim`, `italic`, `underline`, `inverse`. In highlight ranges and virtual text, `style` takes precedence over `color`.
+
+`nsh.style.define(name, style)` saves or replaces a style in the current plugin’s palette. `nsh.style.defined(name)` checks a palette name; `nsh.style.remove(name)` removes it and reports whether it existed. Names allow up to 64 ASCII letters, digits and `-_.` characters. A palette holds up to 512 names.
 
 ~~~lua
 nsh.style.define("accent", {
@@ -182,14 +194,16 @@ nsh.completion.register(function()
 end)
 ~~~
 
-У меню индекс `selected` начинается с 1. NSH отображает до восьми строк. Выбор и вставку плагин может связать с клавишами через `nsh.keys.bind` и `nsh.editor.replace`. Структурированные стили учитывают `NO_COLOR`, `TERM`, настройки `color.mode` и возможности терминала. При 256-цветном режиме NSH переводит RGB в палитру. Если части одной графемы попали в разные сегменты приглашения, применяется стиль её первого символа.
+A menu’s `selected` index starts at 1. NSH displays up to eight rows. A plugin can bind selection and insertion to keys with `nsh.keys.bind` and `nsh.editor.replace`. Structured styles respect `NO_COLOR`, `TERM`, `color.mode` settings and terminal capabilities. In 256-color mode NSH converts RGB to the palette. If parts of one grapheme fall in different prompt segments, the style of its first character is used.
 
-## Границы API
+<a id="границы-api"></a>
 
-Встроенные стандартные библиотеки Lua включают table, string, utf8 и math. Файловые и системные Lua-библиотеки, сырые загрузчики, coroutines и protected calls не открыты. Ограничения уменьшают случайные блокировки. Плагин с возможностями `stdio`, `process`, `fs`, `shell-state` или `exec` остаётся исполняемым кодом пользователя. Разрешения API управляют доступом к операциям NSH. Изоляция процессов и доступа к файловой системе остаётся задачей ОС.
+## API boundaries
 
-Терминальный профиль и шрифт задаются через доступный интерфейс самого терминала. Например, плагин может вызвать внешний клиент Konsole с аргументами и соответствующим разрешением `process`.
+The built-in Lua standard libraries include table, string, utf8 and math. Lua filesystem and system libraries, raw loaders, coroutines and protected calls are not exposed. These limits reduce accidental blocking. A plugin with `stdio`, `process`, `fs`, `shell-state` or `exec` capabilities remains executable user code. API permissions govern access to NSH operations. Process and filesystem isolation remain the OS’s responsibility.
 
-`before-dispatch` получает имя команды и её уже подставленные аргументы. `after-dispatch` получает код завершения, имя и аргументы. Это наблюдаемые этапы. Изменения среды и каталога из `before-dispatch` видит фактический запуск. Для замены запуска используйте `command.replace`, для обработки его результата — `command.wrap`.
+The terminal profile and font are configured through the terminal’s own interface. For example, a plugin can invoke an external Konsole client with arguments and the `process` permission.
 
-Неблокирующее чтение каталога ограничено 8192 записями, 512 КиБ и тремя секундами. Тяжёлый каталог может дать частичный снимок. Результат кешируется две секунды. Внешний помощник запускается только при запросе списка, через текущий NSH с внутренним `--plugin-fs`. Меню отображает до восьми строк. Клавиши и код редактирования по-прежнему выбирает плагин. Провайдер истории подменяет снимок навигации на текущую строку. Сохранением команд на диск управляют обычные настройки истории.
+`before-dispatch` receives the command name and its already expanded arguments. `after-dispatch` receives the exit status, name and arguments. These are observable stages. The actual invocation sees environment and directory changes from `before-dispatch`. Use `command.replace` to replace invocation and `command.wrap` to handle its result.
+
+Nonblocking directory reads are limited to 8192 entries, 512 KiB and three seconds. A large directory can produce a partial snapshot. The result is cached for two seconds. An external helper starts only when a listing is requested, through the current NSH with internal `--plugin-fs`. A menu displays up to eight rows. The plugin still selects keys and editing code. A history provider replaces the navigation snapshot for the current line. Ordinary history settings control saving commands to disk.
