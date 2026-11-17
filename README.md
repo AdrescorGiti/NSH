@@ -12,6 +12,23 @@ NSH is a Linux shell with its own interpreter written in Rust. Ordinary scripts 
 
 The demo includes `mfs`, a personal plugin command; it is not included in NSH by default.
 
+## Quick start
+
+[Install a package or build NSH from source](#installation), then try an interactive session without loading startup files:
+
+```sh
+nsh --vanilla
+```
+
+At the NSH prompt, run a command and return to your previous shell:
+
+```sh
+printf 'Hello from NSH!\n'
+exit
+```
+
+The package installation does not change your login shell. If you built from source and have not installed NSH, run `./target/release/nsh --vanilla` from the repository root instead.
+
 <a id="установка"></a>
 
 ## Installation
@@ -42,17 +59,41 @@ target/release/nsh --vanilla -c 'printf "<%s>\n" "$@"' example one 'two words'
 Run `nsh` after installation. Installing the package leaves your current login shell unchanged. Use `nsh --posix` for POSIX mode, `nsh --vanilla` to start without startup files, or `nsh --no-plugins` to start with Lua plugins disabled.
 
 <a id="плагины"></a>
+<a id="plugins"></a>
 
-## Plugins
+## Try a Lua plugin
 
-~~~lua
+The shipped `custom-commands` example adds a `hello` command. After installing an NSH package, run these commands in your current shell to copy the example into a temporary configuration and start NSH:
+
+```sh
+NSH_DEMO_CONFIG="$(mktemp -d)"
+mkdir -p "$NSH_DEMO_CONFIG/nsh/plugins"
+cp -R /usr/share/doc/nsh/examples/plugins/custom-commands "$NSH_DEMO_CONFIG/nsh/plugins/"
+XDG_CONFIG_HOME="$NSH_DEMO_CONFIG" XDG_STATE_HOME="$NSH_DEMO_CONFIG/state" nsh
+```
+
+At the NSH prompt, enable the example for this session and try it:
+
+```sh
+nsh plugin enable custom-commands
+hello NSH
+exit
+```
+
+The `hello NSH` command prints `Hello from Lua, NSH!`. This demo uses a temporary configuration and leaves your usual NSH configuration unchanged. The temporary directory remains at the path stored in `NSH_DEMO_CONFIG` in your original shell.
+
+If you built from source instead, run the commands from the repository root, replace the `cp` source with `examples/plugins/custom-commands`, and replace `nsh` in the last line with `./target/release/nsh`.
+
+The example registers `hello` in Lua:
+
+```lua
 nsh.command.register("hello", function(args)
-    nsh.print("Hello, " .. (args[1] or "NSH"))
+    nsh.print("Hello from Lua, " .. (args[1] or "NSH") .. "!")
     return 0
 end)
-~~~
+```
 
-The [included examples](examples/plugins/) provide syntax highlighting, path suggestions accepted with the Right Arrow key, and [Aurora Theme](MANUALS/AURORA_THEME.md), with configurable colors and a Lua menu. See [plugin installation](MANUALS/PLUGINS.md), the [Lua API tutorial](MANUALS/PLUGIN_API.md), and [session configuration](MANUALS/CONFIG.md).
+The [included examples](examples/plugins/) also provide syntax highlighting, path suggestions accepted with the Right Arrow key, and [Aurora Theme](MANUALS/AURORA_THEME.md). See [plugin installation](MANUALS/PLUGINS.md), the [Lua API tutorial](MANUALS/PLUGIN_API.md), and [session configuration](MANUALS/CONFIG.md).
 
 <a id="преимущества-nsh"></a>
 

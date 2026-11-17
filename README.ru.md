@@ -13,6 +13,23 @@
 
 NSH — оболочка для Linux со своим интерпретатором на Rust. Обычные скрипты выполняются в POSIX-ориентированном режиме. В интерактивном сеансе Lua-плагины могут добавлять команды, менять приглашение и подсвечивать ввод. Поддерживаемый синтаксис перечислен в [справочнике POSIX](MANUALS/POSIX.ru.md).
 
+## Быстрый старт
+
+[Установите пакет или соберите NSH из исходников](#установка), затем запустите интерактивную сессию без загрузки стартовых файлов:
+
+```sh
+nsh --vanilla
+```
+
+В приглашении NSH выполните команду и вернитесь в предыдущую оболочку:
+
+```sh
+printf 'Hello from NSH!\n'
+exit
+```
+
+Установка пакета не меняет вашу login shell. Если вы собрали NSH из исходников и ещё не установили, запустите `./target/release/nsh --vanilla` из корня репозитория.
+
 ## Установка
 
 Выберите пакет для своей системы и скачайте файл контрольных сумм `SHA256SUMS`. [Текущий релиз](https://github.com/AdrescorGiti/NSH/releases/latest)
@@ -40,16 +57,41 @@ target/release/nsh --vanilla -c 'printf "<%s>\n" "$@"' example one 'two words'
 
 Запустите `nsh` после установки. Пакет сохраняет текущую login shell. Для режима POSIX используйте `nsh --posix`, для запуска без стартовых файлов — `nsh --vanilla`, для проверки с отключёнными Lua-плагинами — `nsh --no-plugins`.
 
-## Плагины
+<a id="плагины"></a>
 
-~~~lua
+## Попробуйте Lua-плагин
+
+Пример `custom-commands` из поставки добавляет команду `hello`. После установки пакета NSH выполните эти команды в текущей оболочке: они скопируют пример во временную конфигурацию и запустят NSH.
+
+```sh
+NSH_DEMO_CONFIG="$(mktemp -d)"
+mkdir -p "$NSH_DEMO_CONFIG/nsh/plugins"
+cp -R /usr/share/doc/nsh/examples/plugins/custom-commands "$NSH_DEMO_CONFIG/nsh/plugins/"
+XDG_CONFIG_HOME="$NSH_DEMO_CONFIG" XDG_STATE_HOME="$NSH_DEMO_CONFIG/state" nsh
+```
+
+В приглашении NSH включите пример для этой сессии и попробуйте его:
+
+```sh
+nsh plugin enable custom-commands
+hello NSH
+exit
+```
+
+Команда `hello NSH` выведет `Hello from Lua, NSH!`. Пример использует временную конфигурацию и не меняет вашу обычную конфигурацию NSH. Временный каталог останется по пути, сохранённому в переменной `NSH_DEMO_CONFIG` исходной оболочки.
+
+Если вы собрали NSH из исходников, выполняйте команды из корня репозитория: замените источник для `cp` на `examples/plugins/custom-commands`, а `nsh` в последней строке — на `./target/release/nsh`.
+
+В примере команда `hello` регистрируется на Lua:
+
+```lua
 nsh.command.register("hello", function(args)
-    nsh.print("Hello, " .. (args[1] or "NSH"))
+    nsh.print("Hello from Lua, " .. (args[1] or "NSH") .. "!")
     return 0
 end)
-~~~
+```
 
-В [готовых примерах](examples/plugins/) есть подсветка, подсказки путей с принятием по Right Arrow и [Aurora Theme](MANUALS/AURORA_THEME.ru.md) с настраиваемыми цветами и меню на Lua. Смотри [установку плагинов](MANUALS/PLUGINS.ru.md), [туториал и Lua API](MANUALS/PLUGIN_API.ru.md) и [настройки сеанса](MANUALS/CONFIG.ru.md).
+В [готовых примерах](examples/plugins/) также есть подсветка, подсказки путей с принятием по стрелке вправо и [Aurora Theme](MANUALS/AURORA_THEME.ru.md). Смотрите [установку плагинов](MANUALS/PLUGINS.ru.md), [туториал и Lua API](MANUALS/PLUGIN_API.ru.md) и [настройки сеанса](MANUALS/CONFIG.ru.md).
 
 ## Преимущества NSH
 
